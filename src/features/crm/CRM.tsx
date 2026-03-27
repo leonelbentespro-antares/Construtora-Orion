@@ -108,6 +108,8 @@ export const CRM: React.FC = () => {
   const [selectedLead, setSelectedLead] = useState<any>(null);
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAddingLead, setIsAddingLead] = useState(false);
+  const [newLeadForm, setNewLeadForm] = useState({ name: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
 
   const [columns, setColumns] = useState([
     { id: 'lead-entrou', title: 'Lead Entrou', status: 'Lead Entrou' },
@@ -159,23 +161,33 @@ export const CRM: React.FC = () => {
   };
 
   const addLead = () => {
-    const newId = leads.length + 1;
+    if (!newLeadForm.name.trim()) return;
+    
+    const newId = Math.max(0, ...leads.map(l => l.id)) + 1;
     const newLead = {
       id: newId,
-      name: `Novo Lead #${newId}`,
-      status: 'Novo Lead',
-      value: 'R$ 0',
-      source: 'Manual',
+      name: newLeadForm.name,
+      status: newLeadForm.status,
+      value: newLeadForm.value || 'R$ 0',
+      source: newLeadForm.source,
       lastActivity: 'Agora',
       score: 50,
-      intelligence: "Lead recém-criado. Iniciar contato para qualificação e entender perfil de investimento.",
+      intelligence: "Lead recém-criado manualmente. Iniciar contato para qualificação.",
       activities: [
-        { id: 1, type: 'status', text: 'Lead criado manualmente', time: 'Agora', icon: 'user' }
+        { id: 1, type: 'status', text: 'Lead criado no sistema', time: 'Agora', icon: 'user' }
       ],
       notes: ""
     };
+    
     setLeads([newLead, ...leads]);
     setSelectedLead(newLead);
+    setIsAddingLead(false);
+    setNewLeadForm({ name: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
+  };
+
+  const openAddLead = (status = 'Lead Entrou') => {
+    setNewLeadForm(prev => ({ ...prev, status }));
+    setIsAddingLead(true);
   };
 
   return (
@@ -207,7 +219,7 @@ export const CRM: React.FC = () => {
               KANBAN
             </button>
           </div>
-          <Button onClick={addLead} variant="primary" size="md" className="flex items-center gap-2 bg-[var(--primary)] text-white">
+          <Button onClick={() => openAddLead()} variant="primary" size="md" className="flex items-center gap-2 bg-[var(--primary)] text-white shadow-lg h-12 px-6">
             <UserPlus size={18} /> Novo Lead
           </Button>
         </div>
@@ -315,7 +327,7 @@ export const CRM: React.FC = () => {
                             </Draggable>
                           ))}
                           {provided.placeholder}
-                          <button onClick={addLead} className="w-full py-3 rounded-xl border border-dashed border-[var(--outline)] text-[var(--on-surface-variant)] text-xs font-bold hover:bg-white hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all uppercase tracking-widest">
+                          <button onClick={() => openAddLead(col.status)} className="w-full py-4 rounded-xl border-2 border-dashed border-[var(--outline)] text-[var(--on-surface-variant)] text-[10px] font-black hover:bg-white hover:border-[var(--primary)] hover:text-[var(--primary)] transition-all uppercase tracking-[0.2em]">
                             + Adicionar Lead
                           </button>
                         </div>
@@ -481,6 +493,77 @@ export const CRM: React.FC = () => {
                 </Card>
               </div>
             </motion.aside>
+          )}
+        </AnimatePresence>
+
+        {/* Modal Adicionar Lead */}
+        <AnimatePresence>
+          {isAddingLead && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-emerald-950/20 backdrop-blur-sm"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="w-full max-w-lg bg-[var(--surface)] rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden"
+              >
+                <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-gradient-to-r from-emerald-50 to-transparent">
+                  <div>
+                    <h3 className="text-xl font-black text-[var(--on-surface)] tracking-tight">Cadastrar Novo Lead</h3>
+                    <p className="text-xs text-[var(--on-surface-variant)] mt-1 uppercase font-bold tracking-widest opacity-60">Etapa: {newLeadForm.status}</p>
+                  </div>
+                  <button onClick={() => setIsAddingLead(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
+                </div>
+
+                <div className="p-8 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Nome Completo</label>
+                    <Input 
+                      autoFocus
+                      placeholder="Ex: João Silva" 
+                      className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                      value={newLeadForm.name}
+                      onChange={e => setNewLeadForm({...newLeadForm, name: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Valor Estimado</label>
+                      <Input 
+                        placeholder="R$ 0,00" 
+                        className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={newLeadForm.value}
+                        onChange={e => setNewLeadForm({...newLeadForm, value: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Origem</label>
+                      <select 
+                        className="w-full h-14 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={newLeadForm.source}
+                        onChange={e => setNewLeadForm({...newLeadForm, source: e.target.value})}
+                      >
+                        <option>WhatsApp</option>
+                        <option>Instagram</option>
+                        <option>Google</option>
+                        <option>Indicação</option>
+                        <option>Manual</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8 bg-[var(--surface-lowest)] flex gap-3">
+                  <Button onClick={() => setIsAddingLead(false)} variant="ghost" className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest">Cancelar</Button>
+                  <Button onClick={addLead} variant="primary" className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-200">Criar Lead Agora</Button>
+                </div>
+              </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

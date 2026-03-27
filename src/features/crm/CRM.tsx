@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, Button, Input } from '../../components/ui';
 import { 
   Users,
@@ -16,71 +16,14 @@ import {
   MessageSquare as MsgIcon,
   CheckCircle2,
   AlertCircle,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight,
+  Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
-
-const INITIAL_LEADS = [
-  { 
-    id: 1, 
-    name: 'Ricardo Santos', 
-    status: 'Lead Entrou', 
-    value: 'R$ 450.000', 
-    source: 'Instagram', 
-    lastActivity: 'Há 2h',
-    score: 85,
-    intelligence: "Lead demonstrou alta intenção ao baixar o catálogo do Residencial II. Focar em opções de 3 suítes.",
-    activities: [
-      { id: 1, type: 'status', text: 'Lead capturado via Instagram', time: 'Há 2h', icon: 'zap' },
-      { id: 2, type: 'action', text: 'Download do catálogo PDF', time: 'Há 1h', icon: 'file' }
-    ],
-    notes: ""
-  },
-  { 
-    id: 2, 
-    name: 'Juliana Mendes', 
-    status: 'Passagem para closer', 
-    value: 'R$ 1.200.000', 
-    source: 'WhatsApp', 
-    lastActivity: 'Há 5h',
-    score: 92,
-    intelligence: "Investidora repetida. Interessada em unidades garden. Prioridade máxima no fechamento.",
-    activities: [
-      { id: 1, type: 'status', text: 'Proposta enviada', time: 'Há 5h', icon: 'dollar' },
-      { id: 2, type: 'action', text: 'Reunião técnica realizada', time: 'Ontem', icon: 'calendar' }
-    ],
-    notes: "Solicitou detalhes sobre o IPTU."
-  },
-  { 
-    id: 3, 
-    name: 'Condomínio Solar', 
-    status: 'Agendamento', 
-    value: 'R$ 8.500.000', 
-    source: 'Indicação', 
-    lastActivity: 'Ontem',
-    score: 65,
-    intelligence: "Negociação complexa com múltiplos decisores. Requer paciência no acompanhamento jurídico.",
-    activities: [
-      { id: 1, type: 'status', text: 'Em negociação de contrato', time: 'Ontem', icon: 'msg' }
-    ],
-    notes: ""
-  },
-  { 
-    id: 4, 
-    name: 'Beatriz Costa', 
-    status: 'Qualificação', 
-    value: 'R$ 320.000', 
-    source: 'Google', 
-    lastActivity: 'Ontem',
-    score: 78,
-    intelligence: "Busca primeiro imóvel. Perfil conservador. Apresentar opções populares e financiamento fácil.",
-    activities: [
-      { id: 1, type: 'status', text: 'Qualificação aprovada', time: 'Ontem', icon: 'check' }
-    ],
-    notes: ""
-  },
-];
+import { useCRM, Lead } from '../../context/CRMContext';
 
 const ActivityIcon = ({ name }: { name: string }) => {
   switch (name) {
@@ -96,20 +39,19 @@ const ActivityIcon = ({ name }: { name: string }) => {
 };
 
 export const CRM: React.FC = () => {
-  const [leads, setLeads] = useState(INITIAL_LEADS);
-
-  React.useEffect(() => {
-    // Sincronizar dados caso o navegador mantenha estado antigo via HMR
-    const hasIntelligence = leads.some(l => l.intelligence);
-    if (!hasIntelligence && INITIAL_LEADS.length > 0) {
-      setLeads(INITIAL_LEADS);
-    }
-  }, []);
-  const [selectedLead, setSelectedLead] = useState<any>(null);
+  const { leads, updateLeadStatus, addLead, editLead, addEvent } = useCRM();
+  
+  const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingLead, setIsAddingLead] = useState(false);
   const [newLeadForm, setNewLeadForm] = useState({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
+
+  const [isEditingLead, setIsEditingLead] = useState(false);
+  const [editLeadForm, setEditLeadForm] = useState({ id: 0, name: '', phone: '', email: '', value: '', source: '', status: '' });
+
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ date: 15, time: '14:00', title: 'Reunião de Vendas', location: 'Escritório', status: '' });
 
   const [columns, setColumns] = useState([
     { id: 'lead-entrou', title: 'Lead Entrou', status: 'Lead Entrou' },
@@ -121,6 +63,11 @@ export const CRM: React.FC = () => {
   ]);
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
+
+  // Encontra o lead selecionado diretamente do contexto para garantir que esteja sempre atualizado
+  const selectedLead = useMemo(() => 
+    leads.find(l => l.id === selectedLeadId) || null
+  , [leads, selectedLeadId]);
 
   const addColumn = () => {
     if (!newColumnTitle.trim()) return;
@@ -144,45 +91,23 @@ export const CRM: React.FC = () => {
     const leadId = parseInt(draggableId);
     const newStatus = destination.droppableId;
 
-    setLeads(prev => prev.map(lead => 
-      lead.id === leadId ? { ...lead, status: newStatus, lastActivity: 'Agora' } : lead
-    ));
-
-    if (selectedLead?.id === leadId) {
-      setSelectedLead((prev: any) => ({ ...prev, status: newStatus, lastActivity: 'Agora' }));
-    }
+    updateLeadStatus(leadId, newStatus);
   };
 
-  const updateLeadStatus = (id: number, newStatus: string) => {
-    setLeads(prev => prev.map(lead => lead.id === id ? { ...lead, status: newStatus, lastActivity: 'Agora' } : lead));
-    if (selectedLead?.id === id) {
-      setSelectedLead((prev: any) => ({ ...prev, status: newStatus, lastActivity: 'Agora' }));
-    }
-  };
-
-  const addLead = () => {
+  const saveNewLead = () => {
     if (!newLeadForm.name.trim()) return;
     
-    const newId = Math.max(0, ...leads.map(l => l.id)) + 1;
-    const newLead = {
-      id: newId,
-      name: newLeadForm.name,
-      phone: newLeadForm.phone,
-      email: newLeadForm.email,
-      status: newLeadForm.status,
-      value: newLeadForm.value || 'R$ 0',
-      source: newLeadForm.source,
+    addLead({
+      ...newLeadForm,
       lastActivity: 'Agora',
       score: 50,
-      intelligence: "Lead recém-criado manualmente. Iniciar contato para qualificação.",
+      intelligence: "Lead capturado manualmente. Aguardando interação para gerar insights.",
       activities: [
-        { id: 1, type: 'status', text: 'Lead criado no sistema', time: 'Agora', icon: 'user' }
+        { id: Date.now(), type: 'status', text: 'Lead cadastrado no sistema', time: 'Agora', icon: 'user' }
       ],
       notes: ""
-    };
+    });
     
-    setLeads([newLead, ...leads]);
-    setSelectedLead(newLead);
     setIsAddingLead(false);
     setNewLeadForm({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
   };
@@ -190,6 +115,47 @@ export const CRM: React.FC = () => {
   const openAddLead = (status = 'Lead Entrou') => {
     setNewLeadForm(prev => ({ ...prev, status }));
     setIsAddingLead(true);
+  };
+
+  const openScheduling = () => {
+    if (!selectedLead) return;
+    setScheduleForm({
+      date: 15,
+      time: '14:00',
+      title: `Reunião com ${selectedLead.name}`,
+      location: 'Escritório',
+      status: selectedLead.status
+    });
+    setIsScheduling(true);
+  };
+
+  const openEditLead = () => {
+    if (!selectedLead) return;
+    setEditLeadForm({
+      id: selectedLead.id,
+      name: selectedLead.name,
+      phone: selectedLead.phone || '',
+      email: selectedLead.email || '',
+      value: selectedLead.value || '',
+      source: selectedLead.source || '',
+      status: selectedLead.status || ''
+    });
+    setIsEditingLead(true);
+  };
+
+  const saveEditedLead = () => {
+    if (!editLeadForm.name.trim() || !selectedLead) return;
+
+    editLead({
+      ...selectedLead,
+      name: editLeadForm.name,
+      phone: editLeadForm.phone,
+      email: editLeadForm.email,
+      value: editLeadForm.value,
+      source: editLeadForm.source,
+    });
+
+    setIsEditingLead(false);
   };
 
   return (
@@ -246,8 +212,8 @@ export const CRM: React.FC = () => {
                     {filteredLeads.map((lead) => (
                       <motion.tr 
                         key={lead.id}
-                        onClick={() => setSelectedLead(lead)}
-                        className={`group cursor-pointer hover:bg-[var(--surface-lowest)] transition-colors ${selectedLead?.id === lead.id ? 'bg-[var(--surface-lowest)] border-l-4 border-[var(--primary)]' : ''}`}
+                        onClick={() => setSelectedLeadId(lead.id)}
+                        className={`group cursor-pointer hover:bg-[var(--surface-lowest)] transition-colors ${selectedLeadId === lead.id ? 'bg-[var(--surface-lowest)] border-l-4 border-[var(--primary)]' : ''}`}
                         whileHover={{ x: 4 }}
                       >
                         <td className="px-6 py-6">
@@ -305,8 +271,8 @@ export const CRM: React.FC = () => {
                                   ref={provided.innerRef}
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
-                                  onClick={() => setSelectedLead(lead)}
-                                  className={`bg-[var(--surface)] p-5 rounded-xl border border-[var(--outline)] shadow-sm cursor-pointer hover:border-[var(--primary)] transition-all group ${selectedLead?.id === lead.id ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''} ${snapshot.isDragging ? 'rotate-2 shadow-2xl scale-105 border-[var(--primary)] z-50' : ''}`}
+                                  onClick={() => setSelectedLeadId(lead.id)}
+                                  className={`bg-[var(--surface)] p-5 rounded-xl border border-[var(--outline)] shadow-sm cursor-pointer hover:border-[var(--primary)] transition-all group ${selectedLeadId === lead.id ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''} ${snapshot.isDragging ? 'rotate-2 shadow-2xl scale-105 border-[var(--primary)] z-50' : ''}`}
                                 >
                                   <div className="flex justify-between items-start mb-4">
                                     <p className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors">{lead.name}</p>
@@ -377,7 +343,7 @@ export const CRM: React.FC = () => {
           )}
         </div>
 
-        {/* Lead Details Sidebar */}
+        {/* Lead Details Sidebar (Painel Inteligente) */}
         <AnimatePresence>
           {selectedLead && (
             <motion.aside 
@@ -401,16 +367,19 @@ export const CRM: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSelectedLead(null)} className="text-[var(--on-surface-variant)] text-[10px] font-bold">OCULTAR</Button>
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="sm" onClick={openEditLead} className="text-[var(--primary)] hover:bg-[var(--primary)]/10 text-[10px] font-black uppercase tracking-widest border border-[var(--primary)]/20 rounded-lg h-8 px-4">EDITAR</Button>
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedLeadId(null)} className="text-[var(--on-surface-variant)] text-[10px] font-black uppercase tracking-widest h-8">OCULTAR</Button>
+                    </div>
                   </div>
 
                   <h3 className="text-2xl font-['Plus_Jakarta_Sans'] font-extrabold text-[var(--on-surface)] leading-tight">{selectedLead.name}</h3>
                   <div className="flex flex-col gap-1 mt-2 mb-8">
                     <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 bg-[var(--surface-high)] text-[var(--on-surface-variant)] text-[9px] font-black uppercase rounded tracking-widest">{selectedLead.status}</span>
-                      <span className="text-[10px] text-[var(--on-surface-variant)] opacity-50 flex items-center gap-1">
+                       <span className="px-2 py-0.5 bg-[var(--surface-high)] text-[var(--on-surface-variant)] text-[9px] font-black uppercase rounded tracking-widest">{selectedLead.status}</span>
+                       <span className="text-[10px] text-[var(--on-surface-variant)] opacity-50 flex items-center gap-1">
                         <Tag size={10} /> {selectedLead.source}
-                      </span>
+                       </span>
                     </div>
                     {selectedLead.phone && <p className="text-[11px] font-bold text-[var(--on-surface-variant)] flex items-center gap-2 mt-1"><Phone size={12} className="text-[var(--primary)]" /> {selectedLead.phone}</p>}
                     {selectedLead.email && <p className="text-[11px] font-bold text-[var(--on-surface-variant)] flex items-center gap-2"><MsgIcon size={12} className="text-[var(--primary)]" /> {selectedLead.email}</p>}
@@ -480,11 +449,12 @@ export const CRM: React.FC = () => {
                     )}
                     
                     <div className="grid grid-cols-2 gap-3 mt-4">
-                      <Button onClick={() => alert('Agendamento aberto...')} className="h-12 border border-[var(--outline)] uppercase text-[10px] font-extrabold flex items-center gap-2 hover:bg-[var(--surface-low)]">
-                        <Calendar size={14} /> AGENDAR
+                      {/* Botão Agendar no CRM - Mantendo Compacto e Elegante */}
+                      <Button onClick={openScheduling} variant="ghost" className="h-9 border border-[var(--outline)] uppercase text-[8px] font-black tracking-[0.2em] flex items-center justify-center gap-1.5 hover:bg-[var(--primary)]/5 hover:text-[var(--primary)] hover:border-[var(--primary)]/30 transition-all rounded-lg px-2">
+                        <Calendar size={10} /> Agendar
                       </Button>
-                      <Button onClick={() => alert('Iniciando chamada...')} className="h-12 border border-[var(--outline)] uppercase text-[10px] font-extrabold flex items-center gap-2 hover:bg-[var(--surface-low)]">
-                        <Phone size={14} /> LIGAR
+                      <Button onClick={() => alert('Iniciando chamada...')} className="h-9 border border-[var(--outline)] uppercase text-[8px] font-black tracking-[0.2em] flex items-center justify-center gap-1.5 hover:bg-[var(--surface-low)] transition-all rounded-lg px-2">
+                        <Phone size={10} /> Ligar
                       </Button>
                     </div>
 
@@ -587,12 +557,223 @@ export const CRM: React.FC = () => {
 
                 <div className="p-8 bg-[var(--surface-lowest)] flex gap-3">
                   <Button onClick={() => setIsAddingLead(false)} variant="ghost" className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest">Cancelar</Button>
-                  <Button onClick={addLead} variant="primary" className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-200">Criar Lead Agora</Button>
+                  <Button onClick={saveNewLead} variant="primary" className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-200">Criar Lead Agora</Button>
                 </div>
               </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Modal Editar Lead */}
+        <AnimatePresence>
+          {isEditingLead && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-emerald-950/20 backdrop-blur-sm"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="w-full max-w-lg bg-[var(--surface)] rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden"
+              >
+                <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-gradient-to-r from-emerald-50 to-transparent">
+                  <div>
+                    <h3 className="text-xl font-black text-[var(--on-surface)] tracking-tight">Editar Lead</h3>
+                    <p className="text-xs text-[var(--on-surface-variant)] mt-1 uppercase font-bold tracking-widest opacity-60">Etapa: {editLeadForm.status}</p>
+                  </div>
+                  <button onClick={() => setIsEditingLead(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
+                </div>
+
+                <div className="p-8 space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Nome Completo</label>
+                    <Input 
+                      autoFocus
+                      placeholder="Ex: João Silva" 
+                      className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                      value={editLeadForm.name}
+                      onChange={(e) => setEditLeadForm({...editLeadForm, name: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">WhatsApp / Telefone</label>
+                       <Input 
+                        placeholder="(00) 00000-0000" 
+                        className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={editLeadForm.phone}
+                        onChange={(e) => setEditLeadForm({...editLeadForm, phone: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">E-mail</label>
+                      <Input 
+                        placeholder="contato@email.com" 
+                        className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={editLeadForm.email}
+                        onChange={(e) => setEditLeadForm({...editLeadForm, email: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Valor Estimado</label>
+                      <Input 
+                        placeholder="R$ 0,00" 
+                        className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={editLeadForm.value}
+                        onChange={(e) => setEditLeadForm({...editLeadForm, value: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Origem</label>
+                      <select 
+                        className="w-full h-14 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={editLeadForm.source}
+                        onChange={(e) => setEditLeadForm({...editLeadForm, source: e.target.value})}
+                      >
+                        <option>WhatsApp</option>
+                        <option>Instagram</option>
+                        <option>Google</option>
+                        <option>Indicação</option>
+                        <option>Manual</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-8 bg-[var(--surface-lowest)] flex gap-3">
+                  <Button onClick={() => setIsEditingLead(false)} variant="ghost" className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest">Cancelar</Button>
+                  <Button onClick={saveEditedLead} variant="primary" className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-200">Salvar Alterações</Button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Modal de Agendamento */}
+        <AnimatePresence>
+          {isScheduling && selectedLead && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-emerald-950/20 backdrop-blur-sm"
+            >
+              <motion.div 
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="w-full max-w-2xl bg-[var(--surface)] rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden flex flex-col md:flex-row"
+              >
+                {/* Calendario Side */}
+                <div className="bg-[var(--surface-lowest)] w-full md:w-1/2 p-8 border-r border-[var(--outline)] flex flex-col">
+                  <div className="flex justify-between items-center mb-8">
+                    <h4 className="font-display text-lg text-[var(--on-surface)]">Março 2026</h4>
+                    <div className="flex gap-2">
+                      <button className="p-2 hover:bg-[var(--surface-high)] rounded-lg transition-colors border border-[var(--outline)]"><ChevronLeft size={16} className="text-[var(--on-surface-variant)]"/></button>
+                      <button className="p-2 hover:bg-[var(--surface-high)] rounded-lg transition-colors border border-[var(--outline)]"><ChevronRight size={16} className="text-[var(--on-surface-variant)]"/></button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-7 gap-2 text-center text-[10px] font-black uppercase text-[var(--on-surface-variant)] mb-4">
+                    <div>D</div><div>S</div><div>T</div><div>Q</div><div>Q</div><div>S</div><div>S</div>
+                  </div>
+                  
+                  <div className="grid grid-cols-7 gap-y-4 gap-x-2 flex-1 content-start">
+                    <div className="h-8 w-8"></div><div className="h-8 w-8"></div>
+                    {Array.from({length: 31}).map((_, i) => (
+                      <button 
+                        key={i} 
+                        onClick={() => setScheduleForm(prev => ({ ...prev, date: i + 1 }))}
+                        className={`h-10 w-10 mx-auto rounded-full flex items-center justify-center text-xs font-bold transition-all ${scheduleForm.date === i + 1 ? 'bg-[var(--primary)] text-white shadow-lg shadow-emerald-200 scale-110 z-10' : 'hover:bg-[var(--surface-high)] text-[var(--on-surface)]'}`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Form Side *) */}
+                <div className="w-full md:w-1/2 flex flex-col bg-white">
+                  <div className="p-6 border-b border-[var(--outline)] flex justify-between items-center bg-gradient-to-r from-emerald-50 to-transparent">
+                    <div>
+                      <h3 className="text-xl font-black text-[var(--on-surface)] tracking-tight">Novo Agendamento</h3>
+                      <p className="text-[10px] text-[var(--primary)] uppercase font-bold tracking-widest mt-1">Com: {selectedLead.name}</p>
+                    </div>
+                    <button onClick={() => setIsScheduling(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
+                  </div>
+
+                  <div className="p-6 space-y-6 flex-1">
+                    {/* Seleção de Etapa (Sincronização Kanban) - Estilo Chips */}
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--on-surface-variant)] flex items-center gap-2 opacity-60">Sincronizar no Kanban</label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {columns.map(col => (
+                          <button 
+                            key={col.id} 
+                            onClick={() => {
+                              setScheduleForm({...scheduleForm, status: col.status});
+                              updateLeadStatus(selectedLead.id, col.status);
+                            }}
+                            className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all border ${scheduleForm.status === col.status ? 'bg-[var(--primary)] border-[var(--primary)] text-white shadow-md shadow-emerald-100' : 'bg-[var(--surface-lowest)] border-[var(--outline)] text-[var(--on-surface-variant)] hover:border-[var(--primary)] hover:bg-white'}`}
+                          >
+                            {col.title}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                       <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2"><Clock size={12}/> Título e Horário</label>
+                       <div className="flex gap-2">
+                        <Input 
+                          placeholder="Ex: Reunião Inicial" 
+                          className="h-12 flex-[2] text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] focus:ring-2 ring-[var(--primary)]"
+                          value={scheduleForm.title}
+                          onChange={e => setScheduleForm({...scheduleForm, title: e.target.value})}
+                        />
+                         <select 
+                          className="flex-1 h-12 px-4 rounded-xl text-xs font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] focus:ring-2 ring-[var(--primary)]"
+                          value={scheduleForm.time}
+                          onChange={e => setScheduleForm({...scheduleForm, time: e.target.value})}
+                        >
+                          <option>09:00</option><option>10:00</option><option>11:00</option>
+                          <option>14:00</option><option>15:00</option><option>16:00</option>
+                        </select>
+                       </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-[var(--surface-lowest)] border-t border-[var(--outline)] flex gap-3">
+                    <Button onClick={() => setIsScheduling(false)} variant="ghost" className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest border border-[var(--outline)]">Cancelar</Button>
+                    <Button onClick={() => { 
+                      setIsScheduling(false); 
+                      // Sincronização global de eventos
+                      addEvent({
+                        day: scheduleForm.date,
+                        month: 2, // Março
+                        title: scheduleForm.title,
+                        time: scheduleForm.time,
+                        type: 'Reunião',
+                        location: 'Manual / CRM',
+                        lead: selectedLead.name
+                      });
+                      updateLeadStatus(selectedLead.id, scheduleForm.status);
+                      alert('Agendamento sincronizado com sucesso na Agenda e no Kanban!'); 
+                    }} variant="primary" className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-200">Confirmar</Button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
       </div>
     </div>
   );

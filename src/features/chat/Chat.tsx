@@ -6,14 +6,18 @@ import {
   Send, 
   Paperclip, 
   Smile,
-  Phone,
-  Video,
   Info,
   CheckCheck,
   MessageSquare,
-  Settings
+  Settings,
+  Calendar,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Clock
 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useCRM } from '../../context/CRMContext';
 
 const INITIAL_CHATS = [
   { id: 1, name: 'Ricardo Santos', lastMsg: 'A proposta do Residencial II está pronta?', time: '09:45', unread: 2, online: true },
@@ -36,13 +40,17 @@ const INITIAL_MESSAGES: Record<number, any[]> = {
 };
 
 export const Chat: React.FC = () => {
+  const { leads, addEvent, updateLeadStatus } = useCRM();
   const [chats, setChats] = useState(INITIAL_CHATS);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [selectedChat, setSelectedChat] = useState(chats[0]);
   const [msgInput, setMsgInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredChats = chats.filter(chat => 
+  const [isScheduling, setIsScheduling] = useState(false);
+  const [scheduleForm, setScheduleForm] = useState({ date: 15, time: '14:00', title: 'Reunião Inicial', location: 'Google Meet', status: 'Lead Entrou' });
+
+  const filteredChats = chats.filter(chat =>  
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -76,11 +84,11 @@ export const Chat: React.FC = () => {
         <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors">
           <MessageSquare size={20} />
         </div>
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors text-white/60">
-          <Phone size={20} />
-        </div>
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors text-white/60">
-          <Video size={20} />
+        <div className="w-full flex justify-center">
+          <div onClick={() => setIsScheduling(true)} className="w-10 h-10 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors text-white/60 hover:text-white" title="Agendar">
+            <Calendar size={16} />
+            <span className="text-[7px] uppercase tracking-[0.15em] mt-1 font-black opacity-80">Agendar</span>
+          </div>
         </div>
         <div className="mt-auto w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer hover:bg-white/10 transition-colors text-white/60">
           <Settings size={20} />
@@ -143,7 +151,7 @@ export const Chat: React.FC = () => {
 
       {/* Main Chat Window */}
       <div className="flex-1 flex flex-col bg-[var(--background)]">
-        {/* Chat Header */}
+        {/* Chat Header *) */}
         <header className="px-8 py-4 bg-[var(--surface)] flex justify-between items-center border-b border-[var(--outline)]">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 rounded-full bg-[var(--surface-high)] flex items-center justify-center font-bold text-[var(--on-surface-variant)]">
@@ -155,9 +163,16 @@ export const Chat: React.FC = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]"><Phone size={18} /></Button>
-            <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]"><Video size={18} /></Button>
-            <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]"><Info size={18} /></Button>
+            {/* Botão Agendar - Reduzido e Elegante */}
+            <Button 
+              onClick={() => setIsScheduling(true)} 
+              variant="ghost" 
+              className="h-8 px-4 flex items-center gap-1.5 text-[var(--on-surface-variant)] hover:text-[var(--primary)] border border-[var(--outline)] hover:border-[var(--primary)]/30 transition-all rounded-lg"
+            >
+              <Calendar size={12} className="opacity-70" />
+              <span className="text-[8px] font-black uppercase tracking-[0.2em]">Agendar</span>
+            </Button>
+            <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]" title="Informações"><Info size={18} /></Button>
           </div>
         </header>
 
@@ -204,6 +219,132 @@ export const Chat: React.FC = () => {
           </div>
         </footer>
       </div>
+
+      {/* Modal de Agendamento */}
+      <AnimatePresence>
+        {isScheduling && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-emerald-950/20 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="w-full max-w-2xl bg-[var(--surface)] rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden flex flex-col md:flex-row"
+            >
+              {/* Calendario Side */}
+              <div className="bg-[var(--surface-lowest)] w-full md:w-1/2 p-8 border-r border-[var(--outline)] flex flex-col">
+                <div className="flex justify-between items-center mb-8">
+                  <h4 className="font-display text-lg text-[var(--on-surface)]">Março 2026</h4>
+                  <div className="flex gap-2">
+                    <button className="p-2 hover:bg-[var(--surface-high)] rounded-lg transition-colors border border-[var(--outline)]"><ChevronLeft size={16} className="text-[var(--on-surface-variant)]"/></button>
+                    <button className="p-2 hover:bg-[var(--surface-high)] rounded-lg transition-colors border border-[var(--outline)]"><ChevronRight size={16} className="text-[var(--on-surface-variant)]"/></button>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-7 gap-2 text-center text-[10px] font-black uppercase text-[var(--on-surface-variant)] mb-4">
+                  <div>D</div><div>S</div><div>T</div><div>Q</div><div>Q</div><div>S</div><div>S</div>
+                </div>
+                
+                <div className="grid grid-cols-7 gap-y-4 gap-x-2 flex-1 content-start">
+                  <div className="h-8 w-8"></div><div className="h-8 w-8"></div>
+                  {Array.from({length: 31}).map((_, i) => (
+                    <button 
+                      key={i} 
+                      onClick={() => setScheduleForm(prev => ({ ...prev, date: i + 1 }))}
+                      className={`h-10 w-10 mx-auto rounded-full flex items-center justify-center text-xs font-bold transition-all ${scheduleForm.date === i + 1 ? 'bg-[var(--primary)] text-white shadow-lg shadow-emerald-200 scale-110 z-10' : 'hover:bg-[var(--surface-high)] text-[var(--on-surface)]'}`}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Form Side */}
+              <div className="w-full md:w-1/2 flex flex-col bg-white">
+                <div className="p-6 border-b border-[var(--outline)] flex justify-between items-center bg-gradient-to-r from-emerald-50 to-transparent">
+                  <div>
+                    <h3 className="text-xl font-black text-[var(--on-surface)] tracking-tight">Novo Agendamento</h3>
+                    <p className="text-[10px] text-[var(--primary)] uppercase font-bold tracking-widest mt-1">Com: {selectedChat.name}</p>
+                  </div>
+                  <button onClick={() => setIsScheduling(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
+                </div>
+
+                <div className="p-6 space-y-6 flex-1">
+                  {/* Seleção de Etapa (Sincronização Kanban) - Estilo Chips */}
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--on-surface-variant)] flex items-center gap-2 opacity-60">Sincronizar no Kanban</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['Lead Entrou', 'Primeiro contato', 'Qualificação', 'Educação', 'Agendamento', 'Passagem para closer'].map(status => (
+                        <button 
+                          key={status} 
+                          onClick={() => {
+                            setScheduleForm({...scheduleForm, status: status});
+                            // Tenta encontrar o lead pelo nome no chat e atualiza o status dele
+                            const lead = leads.find(l => l.name === selectedChat.name);
+                            if (lead) {
+                              updateLeadStatus(lead.id, status);
+                            }
+                          }}
+                          className={`px-3 py-2.5 rounded-xl text-[9px] font-black uppercase transition-all border ${scheduleForm.status === status ? 'bg-[var(--primary)] border-[var(--primary)] text-white shadow-md' : 'bg-[var(--surface-lowest)] border-[var(--outline)] text-[var(--on-surface-variant)] hover:border-[var(--primary)] hover:bg-white'}`}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2"><Clock size={12}/> Título e Horário</label>
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Ex: Reunião Inicial" 
+                        className="h-12 flex-[2] text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] focus:ring-2 ring-[var(--primary)]"
+                        value={scheduleForm.title}
+                        onChange={e => setScheduleForm({...scheduleForm, title: e.target.value})}
+                      />
+                      <select 
+                        className="flex-1 h-12 px-4 rounded-xl text-xs font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] focus:ring-2 ring-[var(--primary)]"
+                        value={scheduleForm.time}
+                        onChange={e => setScheduleForm({...scheduleForm, time: e.target.value})}
+                      >
+                        <option>09:00</option><option>10:00</option><option>11:00</option>
+                        <option>14:00</option><option>15:00</option><option>16:00</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-[var(--surface-lowest)] border-t border-[var(--outline)] flex gap-3">
+                  <Button onClick={() => setIsScheduling(false)} variant="ghost" className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest border border-[var(--outline)]">Cancelar</Button>
+                  <Button 
+                    onClick={() => { 
+                      setIsScheduling(false); 
+                      addEvent({
+                        day: scheduleForm.date,
+                        month: 2, // Março
+                        title: scheduleForm.title,
+                        time: scheduleForm.time,
+                        type: 'Reunião',
+                        location: 'Chat / WhatsApp',
+                        lead: selectedChat.name
+                      });
+                      alert('Agendamento sincronizado com sucesso na Agenda e no Kanban!'); 
+                    }} 
+                    variant="primary" 
+                    className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg shadow-emerald-200"
+                  >
+                    Confirmar
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

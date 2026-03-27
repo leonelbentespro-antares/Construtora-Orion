@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Users, Construction, MessageSquare, Settings, LogOut, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Users, Construction, MessageSquare, Settings, LogOut, Sun, Moon, Calendar } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const SidebarItem = ({ icon: Icon, label, to }: { icon: any, label: string, to: string }) => (
@@ -38,6 +38,7 @@ export const Layout: React.FC = () => {
         <nav className="flex-1">
           <SidebarItem icon={LayoutDashboard} label="Dashboard" to="/" />
           <SidebarItem icon={MessageSquare} label="Comunicação" to="/chat" />
+          <SidebarItem icon={Calendar} label="Agenda" to="/agenda" />
           <SidebarItem icon={Users} label="CRM & Leads" to="/crm" />
           <SidebarItem icon={Construction} label="Gestão de Obras" to="/obras" />
           <SidebarItem icon={Settings} label="Configurações" to="/settings" />

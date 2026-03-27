@@ -1,0 +1,83 @@
+:root {
+  /* Colors - The Emerald Light Aesthetic */
+  --primary: #059669; /* Emerald 600 */
+  --primary-container: #d1fae5; /* Emerald 100 */
+  --on-primary: #ffffff;
+  
+  --secondary: #10b981; /* Emerald 500 */
+  --secondary-container: #ecfdf5;
+  --on-secondary: #064e3b;
+  
+  --tertiary: #4b5563; /* Gray 600 */
+  --tertiary-container: #f3f4f6;
+  --on-tertiary: #111827;
+  
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-lowest: #f9fafb;
+  --surface-low: #f3f4f6;
+  --surface-high: #e5e7eb;
+  --surface-highest: #d1d5db;
+  --surface-bright: #ffffff;
+  
+  --on-background: #064e3b; /* Deep Green Text */
+  --on-surface: #064e3b;
+  --on-surface-variant: #4b5563;
+  
+  --outline: #e5e7eb;
+  --outline-variant: #d1d5db;
+  
+  /* Typography */
+  --font-display: 'Manrope', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  
+  /* Spacing */
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-12: 4rem;
+  --spacing-16: 5.5rem;
+  
+  /* Elevation & Radius */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  --shadow-ambient: 0 4px 20px -5px rgba(0, 78, 59, 0.05);
+}
+
+.dark-theme {
+  --primary: #10b981; /* Emerald 500 (Brighter for dark) */
+  --primary-container: #064e3b;
+  --on-primary: #ffffff;
+  
+  --secondary: #34d399;
+  --secondary-container: #064e3b;
+  --on-secondary: #ecfdf5;
+  
+  --tertiary: #9ca3af; /* Light Gray for dark mode text */
+  --tertiary-container: #1f2937;
+  --on-tertiary: #f9fafb;
+  
+  --background: #0a0a0a;
+  --surface: #121212;
+  --surface-lowest: #050505;
+  --surface-low: #1a1a1a;
+  --surface-high: #2a2a2a;
+  --surface-highest: #3a3a3a;
+  --surface-bright: #1e1e1e;
+  
+  --on-background: #ecfdf5;
+  --on-surface: #ecfdf5;
+  --on-surface-variant: #9ca3af;
+  
+  --outline: #2a2a2a;
+  --outline-variant: #3a3a3a;
+  
+  --shadow-ambient: 0 4px 20px -5px rgba(0, 0, 0, 0.5);
+}

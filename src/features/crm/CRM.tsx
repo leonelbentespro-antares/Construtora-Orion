@@ -25,7 +25,7 @@ const INITIAL_LEADS = [
   { 
     id: 1, 
     name: 'Ricardo Santos', 
-    status: 'Novo Lead', 
+    status: 'Lead Entrou', 
     value: 'R$ 450.000', 
     source: 'Instagram', 
     lastActivity: 'Há 2h',
@@ -40,7 +40,7 @@ const INITIAL_LEADS = [
   { 
     id: 2, 
     name: 'Juliana Mendes', 
-    status: 'Em Proposta', 
+    status: 'Passagem para closer', 
     value: 'R$ 1.200.000', 
     source: 'WhatsApp', 
     lastActivity: 'Há 5h',
@@ -55,7 +55,7 @@ const INITIAL_LEADS = [
   { 
     id: 3, 
     name: 'Condomínio Solar', 
-    status: 'Negociação', 
+    status: 'Agendamento', 
     value: 'R$ 8.500.000', 
     source: 'Indicação', 
     lastActivity: 'Ontem',
@@ -69,7 +69,7 @@ const INITIAL_LEADS = [
   { 
     id: 4, 
     name: 'Beatriz Costa', 
-    status: 'Qualificado', 
+    status: 'Qualificação', 
     value: 'R$ 320.000', 
     source: 'Google', 
     lastActivity: 'Ontem',
@@ -110,10 +110,12 @@ export const CRM: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   const [columns, setColumns] = useState([
-    { id: 'novo', title: 'Novos Leads', status: 'Novo Lead' },
-    { id: 'qualificado', title: 'Qualificados', status: 'Qualificado' },
-    { id: 'proposta', title: 'Em Proposta', status: 'Em Proposta' },
-    { id: 'negociacao', title: 'Negociação', status: 'Negociação' },
+    { id: 'lead-entrou', title: 'Lead Entrou', status: 'Lead Entrou' },
+    { id: 'primeiro-contato', title: 'Primeiro contato (SDR)', status: 'Primeiro contato' },
+    { id: 'qualificacao', title: 'Qualificação', status: 'Qualificação' },
+    { id: 'educacao', title: 'Educação', status: 'Educação' },
+    { id: 'agendamento', title: 'Agendamento', status: 'Agendamento' },
+    { id: 'closer', title: 'Passagem para closer', status: 'Passagem para closer' },
   ]);
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
@@ -441,21 +443,21 @@ export const CRM: React.FC = () => {
                   <div className="mt-8 pt-8 border-t border-[var(--outline)]">
                     <h4 className="text-[10px] uppercase font-black tracking-[0.2em] text-[var(--on-surface-variant)] mb-6">Próximos Passos</h4>
                     
-                    {selectedLead.status !== 'Em Proposta' ? (
+                    {selectedLead.status !== 'Passagem para closer' ? (
                        <Button 
-                        onClick={() => updateLeadStatus(selectedLead.id, 'Em Proposta')}
+                        onClick={() => updateLeadStatus(selectedLead.id, 'Passagem para closer')}
                         variant="primary" 
                         className="w-full h-14 bg-[var(--primary)] text-white font-black tracking-[0.1em] gap-3 shadow-lg hover:shadow-emerald-200 uppercase text-xs"
                       >
-                        Gerar Proposta <DollarSign size={18} />
+                        Passar para Closer <CheckCircle2 size={18} />
                       </Button>
                     ) : (
                        <Button 
-                        onClick={() => updateLeadStatus(selectedLead.id, 'Negociação')}
+                        onClick={() => alert('Lead já está com o closer!')}
                         variant="primary" 
                         className="w-full h-14 bg-amber-500 text-white font-black tracking-[0.1em] gap-3 shadow-lg hover:shadow-amber-200 uppercase text-xs"
                       >
-                        Iniciar Negociação <CheckCircle2 size={18} />
+                        Lead em Fechamento <Zap size={18} />
                       </Button>
                     )}
                     

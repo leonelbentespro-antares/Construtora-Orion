@@ -109,7 +109,7 @@ export const CRM: React.FC = () => {
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingLead, setIsAddingLead] = useState(false);
-  const [newLeadForm, setNewLeadForm] = useState({ name: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
+  const [newLeadForm, setNewLeadForm] = useState({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
 
   const [columns, setColumns] = useState([
     { id: 'lead-entrou', title: 'Lead Entrou', status: 'Lead Entrou' },
@@ -167,6 +167,8 @@ export const CRM: React.FC = () => {
     const newLead = {
       id: newId,
       name: newLeadForm.name,
+      phone: newLeadForm.phone,
+      email: newLeadForm.email,
       status: newLeadForm.status,
       value: newLeadForm.value || 'R$ 0',
       source: newLeadForm.source,
@@ -182,7 +184,7 @@ export const CRM: React.FC = () => {
     setLeads([newLead, ...leads]);
     setSelectedLead(newLead);
     setIsAddingLead(false);
-    setNewLeadForm({ name: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
+    setNewLeadForm({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
   };
 
   const openAddLead = (status = 'Lead Entrou') => {
@@ -403,11 +405,15 @@ export const CRM: React.FC = () => {
                   </div>
 
                   <h3 className="text-2xl font-['Plus_Jakarta_Sans'] font-extrabold text-[var(--on-surface)] leading-tight">{selectedLead.name}</h3>
-                  <div className="flex items-center gap-2 mt-2 mb-8">
-                    <span className="px-2 py-0.5 bg-[var(--surface-high)] text-[var(--on-surface-variant)] text-[9px] font-black uppercase rounded tracking-widest">{selectedLead.status}</span>
-                    <span className="text-[10px] text-[var(--on-surface-variant)] opacity-50 flex items-center gap-1">
-                      <Tag size={10} /> {selectedLead.source}
-                    </span>
+                  <div className="flex flex-col gap-1 mt-2 mb-8">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-[var(--surface-high)] text-[var(--on-surface-variant)] text-[9px] font-black uppercase rounded tracking-widest">{selectedLead.status}</span>
+                      <span className="text-[10px] text-[var(--on-surface-variant)] opacity-50 flex items-center gap-1">
+                        <Tag size={10} /> {selectedLead.source}
+                      </span>
+                    </div>
+                    {selectedLead.phone && <p className="text-[11px] font-bold text-[var(--on-surface-variant)] flex items-center gap-2 mt-1"><Phone size={12} className="text-[var(--primary)]" /> {selectedLead.phone}</p>}
+                    {selectedLead.email && <p className="text-[11px] font-bold text-[var(--on-surface-variant)] flex items-center gap-2"><MsgIcon size={12} className="text-[var(--primary)]" /> {selectedLead.email}</p>}
                   </div>
 
                   <div className="space-y-6">
@@ -529,6 +535,27 @@ export const CRM: React.FC = () => {
                       value={newLeadForm.name}
                       onChange={e => setNewLeadForm({...newLeadForm, name: e.target.value})}
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">WhatsApp / Telefone</label>
+                      <Input 
+                        placeholder="(00) 00000-0000" 
+                        className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={newLeadForm.phone}
+                        onChange={e => setNewLeadForm({...newLeadForm, phone: e.target.value})}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">E-mail</label>
+                      <Input 
+                        placeholder="contato@email.com" 
+                        className="h-14 text-sm font-bold bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)]"
+                        value={newLeadForm.email}
+                        onChange={e => setNewLeadForm({...newLeadForm, email: e.target.value})}
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">

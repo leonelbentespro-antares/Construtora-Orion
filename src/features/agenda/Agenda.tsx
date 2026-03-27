@@ -14,13 +14,23 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCRM } from '../../context/CRMContext';
 
+// Paleta de cores para tipos de evento diferentes
+const EVENT_COLORS: Record<string, string> = {
+  'Reunião':   'bg-emerald-500/90 text-white',
+  'Visita':    'bg-sky-500/90 text-white',
+  'Comercial': 'bg-amber-500/90 text-white',
+  'Design':    'bg-violet-500/90 text-white',
+  'default':   'bg-[var(--primary)]/80 text-white',
+};
+
+const getEventColor = (type: string, isSelected: boolean) => {
+  if (isSelected) return 'bg-white/30 text-white';
+  return EVENT_COLORS[type] ?? EVENT_COLORS['default'];
+};
+
 export const Agenda: React.FC = () => {
   const { events } = useCRM();
-  const [currentDate, setCurrentDate] = useState(new Date(2026, 2, 1)); // Março 2026
   const [selectedDay, setSelectedDay] = useState(15);
-
-  const daysInMonth = 31;
-  const startDay = 0; // Domingo
 
   const selectedEvents = events.filter(e => e.day === selectedDay);
 
@@ -40,7 +50,7 @@ export const Agenda: React.FC = () => {
 
       <div className="flex flex-col lg:flex-row gap-8 flex-1 min-h-0">
         {/* Lado Esquerdo: Calendário */}
-        <Card className="flex-1 p-8 bg-[var(--surface)] border border-[var(--outline)] flex flex-col shadow-ambient">
+        <Card className="flex-1 p-8 bg-[var(--surface)] border border-[var(--outline)] flex flex-col shadow-ambient overflow-auto">
           <div className="flex justify-between items-center mb-10">
             <h3 className="text-2xl font-display text-[var(--on-surface)] font-bold">Março 2026</h3>
             <div className="flex gap-3">
@@ -49,50 +59,71 @@ export const Agenda: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-4 text-center text-[10px] font-black uppercase tracking-[0.2em] text-[var(--on-surface-variant)] mb-8 opacity-60">
+          {/* Cabeçalho dos dias da semana */}
+          <div className="grid grid-cols-7 gap-3 text-center text-[10px] font-black uppercase tracking-[0.2em] text-[var(--on-surface-variant)] mb-4 opacity-60">
             <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
           </div>
 
-          <div className="grid grid-cols-7 gap-4 flex-1">
-            {/* Espaços vazios do início do mês (Março 2026 começa domingo) */}
+          {/* Grade de dias com prévia dos eventos */}
+          <div className="grid grid-cols-7 gap-3 flex-1">
             {Array.from({ length: 31 }).map((_, i) => {
               const day = i + 1;
-              const hasEvents = events.some(e => e.day === day);
+              const dayEvents = events.filter(e => e.day === day);
+              const hasEvents = dayEvents.length > 0;
               const isSelected = selectedDay === day;
 
               return (
                 <motion.div
                   key={day}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
                   onClick={() => setSelectedDay(day)}
                   className={`
-                    relative h-full min-h-[100px] rounded-2xl border transition-all cursor-pointer p-3 flex flex-col gap-2 group
-                    ${isSelected ? 'bg-[var(--primary)] border-[var(--primary)] shadow-xl shadow-emerald-200/50' : 'bg-[var(--surface-low)]/30 border-[var(--outline)] hover:border-[var(--primary)] hover:bg-white'}
+                    relative rounded-2xl border transition-all cursor-pointer p-3 flex flex-col gap-1.5 group min-h-[110px]
+                    ${isSelected
+                      ? 'bg-[var(--primary)] border-[var(--primary)] shadow-xl shadow-emerald-200/50'
+                      : 'bg-[var(--surface-low)]/30 border-[var(--outline)] hover:border-[var(--primary)]/40 hover:bg-white hover:shadow-md'}
                   `}
                 >
-                  <span className={`text-sm font-black ${isSelected ? 'text-white' : 'text-[var(--on-surface)] group-hover:text-[var(--primary)]'}`}>
+                  {/* Número do dia */}
+                  <span className={`text-sm font-black leading-none ${isSelected ? 'text-white' : 'text-[var(--on-surface)] group-hover:text-[var(--primary)]'}`}>
                     {day}
                   </span>
-                  
+
+                  {/* Pílulas de prévia dos eventos */}
                   {hasEvents && (
-                    <div className="flex flex-col gap-1.5 mt-auto">
-                      {events.filter(e => e.day === day).map(e => (
-                        <div 
-                          key={e.id} 
-                          className={`
-                            h-1.5 rounded-full w-full 
-                            ${isSelected ? 'bg-white/40' : 'bg-[var(--primary)]/60 group-hover:bg-[var(--primary)]'}
-                          `} 
-                        />
+                    <div className="flex flex-col gap-1 mt-0.5">
+                      {dayEvents.slice(0, 2).map(e => (
+                        <div
+                          key={e.id}
+                          className={`rounded-md px-1.5 py-1 flex flex-col gap-0.5 overflow-hidden ${getEventColor(e.type, isSelected)}`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <Clock size={8} className="flex-shrink-0 opacity-80" />
+                            <span className="text-[8px] font-black leading-tight truncate tracking-tight">
+                              {e.time} · {e.title}
+                            </span>
+                          </div>
+                          <span className="text-[7px] font-bold leading-tight truncate opacity-80 pl-3">
+                            {e.lead}
+                          </span>
+                        </div>
                       ))}
+
+                      {/* Indicador "+N mais" se houver mais de 2 eventos */}
+                      {dayEvents.length > 2 && (
+                        <span className={`text-[8px] font-black px-1.5 leading-tight ${isSelected ? 'text-white/70' : 'text-[var(--primary)]'}`}>
+                          +{dayEvents.length - 2} mais
+                        </span>
+                      )}
                     </div>
                   )}
 
+                  {/* Indicador de dia ativo */}
                   {isSelected && (
-                    <motion.div 
-                      layoutId="active-day shadow"
-                      className="absolute inset-x-3 bottom-3 h-0.5 bg-white/20 rounded-full"
+                    <motion.div
+                      layoutId="active-indicator"
+                      className="absolute bottom-2 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-white/40 rounded-full"
                     />
                   )}
                 </motion.div>
@@ -101,7 +132,7 @@ export const Agenda: React.FC = () => {
           </div>
         </Card>
 
-        {/* Lado Direito: Agenda do Dia Selecionado */}
+        {/* Lado Direito: Detalhes do dia selecionado */}
         <aside className="w-full lg:w-96 flex flex-col space-y-6">
           <Card className="p-8 border-l-4 border-l-[var(--primary)] bg-white shadow-lg flex-1 flex flex-col">
             <div className="flex justify-between items-start mb-10">
@@ -158,7 +189,7 @@ export const Agenda: React.FC = () => {
                       <CalendarIcon size={32} />
                     </div>
                     <p className="text-sm font-bold uppercase tracking-widest">Nenhum evento agendado</p>
-                    <p className="text-[10px] mt-2">Clique em um dia com marcador para ver detalhes.</p>
+                    <p className="text-[10px] mt-2">Clique em um dia para ver detalhes.</p>
                   </motion.div>
                 )}
               </AnimatePresence>

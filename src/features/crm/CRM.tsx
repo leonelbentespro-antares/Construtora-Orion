@@ -397,7 +397,7 @@ export const CRM: React.FC = () => {
                                     <p className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors">{lead.name}</p>
                                     <button 
                                       onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === lead.id ? null : lead.id); }}
-                                      className="opacity-0 group-hover:opacity-100 p-1 text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors"
+                                      className="p-1 text-[var(--on-surface-variant)] opacity-40 hover:opacity-100 hover:text-[var(--primary)] transition-all"
                                     >
                                       <MoreHorizontal size={14} />
                                     </button>

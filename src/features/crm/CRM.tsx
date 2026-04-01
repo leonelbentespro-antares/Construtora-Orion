@@ -19,7 +19,10 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
-  Clock
+  Clock,
+  Download,
+  Upload,
+  Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
@@ -39,16 +42,19 @@ const ActivityIcon = ({ name }: { name: string }) => {
 };
 
 export const CRM: React.FC = () => {
-  const { leads, updateLeadStatus, addLead, editLead, addEvent } = useCRM();
+  const { leads, updateLeadStatus, addLead, editLead, deleteLead, addEvent, importLeads, clearAllData } = useCRM();
+  
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   
   const [selectedLeadId, setSelectedLeadId] = useState<number | null>(null);
+  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingLead, setIsAddingLead] = useState(false);
   const [newLeadForm, setNewLeadForm] = useState({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
 
   const [isEditingLead, setIsEditingLead] = useState(false);
-  const [editLeadForm, setEditLeadForm] = useState({ id: 0, name: '', phone: '', email: '', value: '', source: '', status: '' });
+  const [editLeadForm, setEditLeadForm] = useState({ id: 0, name: '', phone: '', email: '', value: '', source: '', status: '', notes: '' });
 
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ date: 15, time: '14:00', title: 'Reunião de Vendas', location: 'Escritório', status: '' });
@@ -138,7 +144,8 @@ export const CRM: React.FC = () => {
       email: selectedLead.email || '',
       value: selectedLead.value || '',
       source: selectedLead.source || '',
-      status: selectedLead.status || ''
+      status: selectedLead.status || '',
+      notes: selectedLead.notes || ''
     });
     setIsEditingLead(true);
   };
@@ -153,9 +160,99 @@ export const CRM: React.FC = () => {
       email: editLeadForm.email,
       value: editLeadForm.value,
       source: editLeadForm.source,
+      notes: editLeadForm.notes,
     });
 
     setIsEditingLead(false);
+  };
+
+  const handleExport = () => {
+    if (leads.length === 0) {
+      alert('Nenhum lead para exportar.');
+      return;
+    }
+
+    const headers = ['Nome', 'Telefone', 'Email', 'Status', 'Valor', 'Origem'];
+    const csvContent = [
+      headers.join(','),
+      ...leads.map(lead => [
+        `"${lead.name.replace(/"/g, '""')}"`,
+        `"${lead.phone || ''}"`,
+        `"${lead.email || ''}"`,
+        `"${lead.status}"`,
+        `"${lead.value}"`,
+        `"${lead.source}"`
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'leads_export.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const text = e.target?.result as string;
+      if (!text) return;
+
+      const lines = text.split('\n');
+      if (lines.length < 2) {
+        alert('Arquivo CSV vazio ou sem dados válido.');
+        return;
+      }
+
+      const newLeads: Omit<Lead, 'id'>[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        
+        // Regex para separar por vírgula respeitando aspas
+        const values = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        const parseVal = (val: string) => val ? val.replace(/^"|"$/g, '').replace(/""/g, '"') : '';
+        
+        if (values.length >= 1) {
+          const name = parseVal(values[0]);
+          if (!name) continue;
+
+          newLeads.push({
+            name,
+            phone: parseVal(values[1] || ''),
+            email: parseVal(values[2] || ''),
+            status: parseVal(values[3] || '') || 'Lead Entrou',
+            value: parseVal(values[4] || '') || 'R$ 0,00',
+            source: parseVal(values[5] || '') || 'Importação CSV',
+            lastActivity: 'Agora',
+            score: 50,
+            intelligence: 'Lead importado via CSV.',
+            activities: [
+              { id: Date.now() + i, type: 'status', text: 'Lead importado com CSV', time: 'Agora', icon: 'zap' }
+            ],
+            notes: ''
+          });
+        }
+      }
+
+      if (newLeads.length > 0) {
+        importLeads(newLeads);
+        alert(`${newLeads.length} leads importados com sucesso!`);
+      } else {
+        alert('Nenhum dado válido encontrado no arquivo.');
+      }
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -173,7 +270,29 @@ export const CRM: React.FC = () => {
           </div>
         </div>
         <div className="flex items-center gap-4">
-          <div className="bg-[var(--surface-low)] p-1 rounded-xl flex gap-1 border border-[var(--outline)]">
+          <input 
+            type="file" 
+            accept=".csv" 
+            ref={fileInputRef} 
+            onChange={handleImport} 
+            className="hidden" 
+          />
+          <div className="hidden lg:flex items-center gap-2">
+            <Button variant="ghost" className="flex items-center gap-2 text-xs font-bold text-[var(--on-surface-variant)] border border-[var(--outline)] h-10 px-4 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] hover:border-[var(--primary)]/30 rounded-xl transition-all" onClick={() => fileInputRef.current?.click()}>
+              <Upload size={15} /> Importar
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 text-xs font-bold text-[var(--on-surface-variant)] border border-[var(--outline)] h-10 px-4 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] hover:border-[var(--primary)]/30 rounded-xl transition-all" onClick={handleExport}>
+              <Download size={15} /> Exportar
+            </Button>
+            <Button variant="ghost" className="flex items-center gap-2 text-xs font-bold text-[var(--error)] border border-[var(--error)]/20 h-10 px-4 hover:bg-[var(--error)]/10 hover:border-[var(--error)]/30 rounded-xl transition-all" onClick={() => {
+              if (window.confirm('Tem certeza que deseja apagar TODOS os leads e eventos do Kanban? Esta ação é irreversível.')) {
+                clearAllData();
+              }
+            }}>
+              <Trash2 size={15} /> Limpar
+            </Button>
+          </div>
+          <div className="bg-[var(--surface-low)] p-1 rounded-xl flex gap-1 border border-[var(--outline)] h-10 items-center">
             <button 
               onClick={() => setView('list')}
               className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${view === 'list' ? 'bg-white text-[var(--primary)] shadow-sm' : 'text-[var(--on-surface-variant)] hover:text-[var(--on-surface)]'}`}
@@ -274,9 +393,35 @@ export const CRM: React.FC = () => {
                                   onClick={() => setSelectedLeadId(lead.id)}
                                   className={`bg-[var(--surface)] p-5 rounded-xl border border-[var(--outline)] shadow-sm cursor-pointer hover:border-[var(--primary)] transition-all group ${selectedLeadId === lead.id ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''} ${snapshot.isDragging ? 'rotate-2 shadow-2xl scale-105 border-[var(--primary)] z-50' : ''}`}
                                 >
-                                  <div className="flex justify-between items-start mb-4">
+                                  <div className="flex justify-between items-start mb-4 relative">
                                     <p className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors">{lead.name}</p>
-                                    <button className="opacity-0 group-hover:opacity-100 p-1 text-[var(--on-surface-variant)]"><MoreHorizontal size={14} /></button>
+                                    <button 
+                                      onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === lead.id ? null : lead.id); }}
+                                      className="opacity-0 group-hover:opacity-100 p-1 text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-colors"
+                                    >
+                                      <MoreHorizontal size={14} />
+                                    </button>
+                                    
+                                    {menuOpenId === lead.id && (
+                                      <div 
+                                        onMouseLeave={() => setMenuOpenId(null)}
+                                        className="absolute right-0 top-6 w-32 bg-white rounded-lg shadow-xl border border-[var(--outline)] py-1 z-50 animate-in slide-in-from-top-2 duration-200"
+                                      >
+                                        <button 
+                                          onClick={(e) => { 
+                                            e.stopPropagation(); 
+                                            if (window.confirm('Excluir este contato?')) {
+                                              deleteLead(lead.id); 
+                                            }
+                                            setMenuOpenId(null); 
+                                          }}
+                                          className="w-full text-left px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                        >
+                                          <Trash2 size={12} />
+                                          Excluir
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                   <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-[var(--primary)] font-black text-xs">
@@ -644,6 +789,19 @@ export const CRM: React.FC = () => {
                         <option>Manual</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div className="space-y-2 mt-6">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
+                      <FileText size={12} className="text-[var(--primary)]" />
+                      Anotações do Cliente
+                    </label>
+                    <textarea 
+                      placeholder="Adicione observações importantes sobre o contato, orçamento discutido..." 
+                      className="w-full p-4 rounded-xl text-sm bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)] min-h-[120px] resize-y transition-all placeholder:text-[var(--on-surface-variant)]/40"
+                      value={editLeadForm.notes}
+                      onChange={(e) => setEditLeadForm({...editLeadForm, notes: e.target.value})}
+                    />
                   </div>
                 </div>
 

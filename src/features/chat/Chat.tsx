@@ -19,12 +19,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCRM } from '../../context/CRMContext';
 
-const INITIAL_CHATS = [
-  { id: 1, name: 'Ricardo Santos', lastMsg: 'A proposta do Residencial II está pronta?', time: '09:45', unread: 2, online: true },
-  { id: 2, name: 'Eng. Marcos', lastMsg: 'Material chegou no canteiro.', time: '08:30', unread: 0, online: false },
-  { id: 3, name: 'Beatriz Costa', lastMsg: 'Obrigado pelo envio!', time: 'Ontem', unread: 0, online: true },
-  { id: 4, name: 'Construtora Orion', lastMsg: 'Reunião confirmada para às 14h.', time: 'Ontem', unread: 0, online: false },
-];
+const INITIAL_CHATS: any[] = [];
 
 const INITIAL_MESSAGES: Record<number, any[]> = {
   1: [
@@ -40,10 +35,10 @@ const INITIAL_MESSAGES: Record<number, any[]> = {
 };
 
 export const Chat: React.FC = () => {
-  const { leads, addEvent, updateLeadStatus } = useCRM();
-  const [chats, setChats] = useState(INITIAL_CHATS);
+  const { leads, addEvent, updateLeadStatus, whatsappStatus, sendMessage } = useCRM();
+  const [chats, setChats] = useState<any[]>(INITIAL_CHATS);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
-  const [selectedChat, setSelectedChat] = useState(chats[0]);
+  const [selectedChat, setSelectedChat] = useState<any>(chats[0] || null);
   const [msgInput, setMsgInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -54,10 +49,25 @@ export const Chat: React.FC = () => {
     chat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const currentMessages = messages[selectedChat.id] || [];
+  const currentMessages = selectedChat ? (messages[selectedChat.id] || []) : [];
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!msgInput.trim()) return;
+
+    // Envio real via UAZAPI
+    try {
+      if (selectedChat?.name) {
+        // Tenta encontrar o lead para pegar o telefone
+        const lead = leads.find(l => l.name === selectedChat.name);
+        if (lead?.phone) {
+          await sendMessage(lead.phone, msgInput);
+        } else {
+          console.warn('Lead não encontrado ou sem telefone para envio real.');
+        }
+      }
+    } catch (e) {
+      console.error('Falha no envio real:', e);
+    }
 
     const newMessage = {
       id: Date.now(),
@@ -96,7 +106,7 @@ export const Chat: React.FC = () => {
       </nav>
 
       {/* Chat Sidebar */}
-      <aside className="w-80 flex flex-col border-r border-[var(--outline)] bg-[var(--surface-lowest)]">
+      <aside className="w-80 flex flex-col h-full min-h-0 border-r border-[var(--outline)] bg-[var(--surface-lowest)]">
         <div className="p-6 border-b border-[var(--outline)]">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-xl font-display text-[var(--on-surface)] tracking-tighter font-bold uppercase">Mensagens</h3>
@@ -113,7 +123,7 @@ export const Chat: React.FC = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0 custom-scrollbar">
           {filteredChats.map((chat) => (
             <div 
               key={chat.id}
@@ -122,7 +132,7 @@ export const Chat: React.FC = () => {
                 // Mark as read
                 setChats(prev => prev.map(c => c.id === chat.id ? { ...c, unread: 0 } : c));
               }}
-              className={`flex gap-4 p-4 cursor-pointer transition-colors ${selectedChat.id === chat.id ? 'bg-[var(--primary-container)]/30 border-r-4 border-[var(--primary)]' : 'hover:bg-[var(--surface-low)]'}`}
+              className={`flex gap-4 p-4 cursor-pointer transition-colors ${selectedChat && selectedChat.id === chat.id ? 'bg-[var(--primary-container)]/30 border-r-4 border-[var(--primary)]' : 'hover:bg-[var(--surface-low)]'}`}
             >
               <div className="relative">
                 <div className="w-12 h-12 rounded-full bg-[var(--surface-high)] flex items-center justify-center font-bold text-[var(--on-surface-variant)] border border-[var(--outline)]">
@@ -150,75 +160,87 @@ export const Chat: React.FC = () => {
       </aside>
 
       {/* Main Chat Window */}
-      <div className="flex-1 flex flex-col bg-[var(--background)]">
-        {/* Chat Header *) */}
-        <header className="px-8 py-4 bg-[var(--surface)] flex justify-between items-center border-b border-[var(--outline)]">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-[var(--surface-high)] flex items-center justify-center font-bold text-[var(--on-surface-variant)]">
-              {selectedChat.name[0]}
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[var(--on-surface)]">{selectedChat.name}</p>
-              <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">{selectedChat.online ? 'Online' : 'Offline'}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            {/* Botão Agendar - Reduzido e Elegante */}
-            <Button 
-              onClick={() => setIsScheduling(true)} 
-              variant="ghost" 
-              className="h-8 px-4 flex items-center gap-1.5 text-[var(--on-surface-variant)] hover:text-[var(--primary)] border border-[var(--outline)] hover:border-[var(--primary)]/30 transition-all rounded-lg"
-            >
-              <Calendar size={12} className="opacity-70" />
-              <span className="text-[8px] font-black uppercase tracking-[0.2em]">Agendar</span>
-            </Button>
-            <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]" title="Informações"><Info size={18} /></Button>
-          </div>
-        </header>
-
-        {/* Messages */}
-        <div className="flex-1 p-8 overflow-y-auto space-y-6 bg-[var(--surface-lowest)]">
-          <div className="flex justify-center mb-8">
-            <span className="text-[10px] uppercase tracking-widest bg-[var(--surface-high)] px-3 py-1 rounded-full text-[var(--on-surface-variant)]">Quinta-feira</span>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {currentMessages.map((m) => (
-              <div key={m.id} className={`flex ${m.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[70%] p-4 rounded-2xl shadow-sm border ${m.sender === 'me' ? 'bg-[var(--primary)] text-white' : 'bg-[var(--surface)] border-[var(--outline)] text-[var(--on-surface)]'}`}>
-                  <p className="text-sm">{m.text}</p>
-                  <div className={`flex justify-end items-center gap-1 mt-2 text-[9px] ${m.sender === 'me' ? 'text-white/70' : 'text-[var(--on-surface-variant)]'}`}>
-                    <span>{m.time}</span>
-                    {m.sender === 'me' && <CheckCheck size={12} />}
-                  </div>
+      {selectedChat ? (
+        <div className="flex-1 flex flex-col h-full min-h-0 bg-[var(--background)]">
+          {/* Chat Header *) */}
+          <header className="px-8 py-4 bg-[var(--surface)] flex justify-between items-center border-b border-[var(--outline)]">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 rounded-full bg-[var(--surface-high)] flex items-center justify-center font-bold text-[var(--on-surface-variant)]">
+                {selectedChat.name[0]}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-[var(--on-surface)]">{selectedChat.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <div className={`w-1.5 h-1.5 rounded-full ${whatsappStatus === 'connected' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)] animate-pulse'}`} />
+                  <p className={`text-[9px] font-black uppercase tracking-widest ${whatsappStatus === 'connected' ? 'text-emerald-600' : 'text-rose-600'}`}>
+                    {whatsappStatus === 'connected' ? 'WhatsApp Ativo' : whatsappStatus === 'qrcode' ? 'Aguardando QR Code' : 'WhatsApp Desconectado'}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Message Input */}
-        <footer className="p-6 bg-[var(--surface)] border-t border-[var(--outline)]">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]"><Paperclip size={20} /></Button>
-            <div className="flex-1 relative">
-              <Input 
-                value={msgInput}
-                onChange={(e) => setMsgInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                placeholder="Escreva sua mensagem..." 
-                className="bg-[var(--surface-lowest)] border border-[var(--outline)] h-12 pr-12 focus:border-[var(--primary)] transition-colors" 
-              />
-              <button className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] hover:text-[var(--primary)]">
-                <Smile size={20} />
-              </button>
             </div>
-            <Button onClick={handleSendMessage} variant="primary" className="p-1 w-12 h-12 rounded-full bg-[var(--primary)] hover:scale-105 transition-all shadow-md">
-              <Send size={20} className="text-white" />
-            </Button>
+            <div className="flex gap-2">
+              {/* Botão Agendar - Reduzido e Elegante */}
+              <Button 
+                onClick={() => setIsScheduling(true)} 
+                variant="ghost" 
+                className="h-8 px-4 flex items-center gap-1.5 text-[var(--on-surface-variant)] hover:text-[var(--primary)] border border-[var(--outline)] hover:border-[var(--primary)]/30 transition-all rounded-lg"
+              >
+                <Calendar size={12} className="opacity-70" />
+                <span className="text-[8px] font-black uppercase tracking-[0.2em]">Agendar</span>
+              </Button>
+              <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]" title="Informações"><Info size={18} /></Button>
+            </div>
+          </header>
+
+          {/* Messages */}
+          <div className="flex-1 p-8 overflow-y-auto min-h-0 custom-scrollbar space-y-6 bg-[var(--surface-lowest)]">
+            <div className="flex justify-center mb-8">
+              <span className="text-[10px] uppercase tracking-widest bg-[var(--surface-high)] px-3 py-1 rounded-full text-[var(--on-surface-variant)]">Nenhuma conversa recente</span>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {currentMessages.map((m: any) => (
+                <div key={m.id} className={`flex ${m.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[70%] p-4 rounded-2xl shadow-sm border ${m.sender === 'me' ? 'bg-[var(--primary)] text-white' : 'bg-[var(--surface)] border-[var(--outline)] text-[var(--on-surface)]'}`}>
+                    <p className="text-sm">{m.text}</p>
+                    <div className={`flex justify-end items-center gap-1 mt-2 text-[9px] ${m.sender === 'me' ? 'text-white/70' : 'text-[var(--on-surface-variant)]'}`}>
+                      <span>{m.time}</span>
+                      {m.sender === 'me' && <CheckCheck size={12} />}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        </footer>
-      </div>
+
+          {/* Message Input */}
+          <footer className="p-6 bg-[var(--surface)] border-t border-[var(--outline)]">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" className="p-2 text-[var(--on-surface-variant)]"><Paperclip size={20} /></Button>
+              <div className="flex-1 relative">
+                <Input 
+                  value={msgInput}
+                  onChange={(e: any) => setMsgInput(e.target.value)}
+                  onKeyDown={(e: any) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="Escreva sua mensagem..." 
+                  className="bg-[var(--surface-lowest)] border border-[var(--outline)] h-12 pr-12 focus:border-[var(--primary)] transition-colors" 
+                />
+                <button className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--on-surface-variant)] hover:text-[var(--primary)]">
+                  <Smile size={20} />
+                </button>
+              </div>
+              <Button onClick={handleSendMessage} variant="primary" className="p-1 w-12 h-12 rounded-full bg-[var(--primary)] hover:scale-105 transition-all shadow-md">
+                <Send size={20} className="text-white" />
+              </Button>
+            </div>
+          </footer>
+        </div>
+      ) : (
+        <div className="flex-1 flex flex-col items-center justify-center bg-[var(--background)]">
+          <MessageSquare size={48} className="text-[var(--on-surface-variant)] opacity-20 mb-4" />
+          <p className="text-[var(--on-surface-variant)] font-bold tracking-widest uppercase text-xs">Nenhum Contato Ativo</p>
+        </div>
+      )}
 
       {/* Modal de Agendamento */}
       <AnimatePresence>
@@ -284,7 +306,7 @@ export const Chat: React.FC = () => {
                           onClick={() => {
                             setScheduleForm({...scheduleForm, status: status});
                             // Tenta encontrar o lead pelo nome no chat e atualiza o status dele
-                            const lead = leads.find(l => l.name === selectedChat.name);
+                            const lead = selectedChat ? leads.find(l => l.name === selectedChat.name) : null;
                             if (lead) {
                               updateLeadStatus(lead.id, status);
                             }
@@ -330,7 +352,7 @@ export const Chat: React.FC = () => {
                         time: scheduleForm.time,
                         type: 'Reunião',
                         location: 'Chat / WhatsApp',
-                        lead: selectedChat.name
+                        lead: selectedChat ? selectedChat.name : 'Desconhecido'
                       });
                       alert('Agendamento sincronizado com sucesso na Agenda e no Kanban!'); 
                     }} 

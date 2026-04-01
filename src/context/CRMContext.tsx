@@ -34,6 +34,8 @@ export interface Event {
   lead: string;
 }
 
+export type WhatsAppStatus = 'connected' | 'disconnected' | 'connecting' | 'qrcode';
+
 interface CRMContextType {
   leads: Lead[];
   events: Event[];
@@ -42,79 +44,26 @@ interface CRMContextType {
   addEvent: (event: Omit<Event, 'id'>) => void;
   deleteEvent: (id: number) => void;
   editLead: (lead: Lead) => void;
+  deleteLead: (id: number) => void;
+  whatsappStatus: WhatsAppStatus;
+  qrCode: string | null;
+  updateWhatsAppStatus: () => Promise<void>;
+  sendMessage: (number: string, text: string) => Promise<any>;
+  importLeads: (newLeads: Omit<Lead, 'id'>[]) => void;
+  clearAllData: () => void;
 }
 
 const CRMContext = createContext<CRMContextType | undefined>(undefined);
 
-const INITIAL_LEADS: Lead[] = [
-  { 
-    id: 1, 
-    name: 'Ricardo Santos', 
-    status: 'Lead Entrou', 
-    value: 'R$ 450.000', 
-    source: 'Instagram', 
-    lastActivity: 'Há 2h',
-    score: 85,
-    intelligence: "Lead demonstrou alta intenção ao baixar o catálogo do Residencial II. Focar em opções de 3 suítes.",
-    activities: [
-      { id: 1, type: 'status', text: 'Lead capturado via Instagram', time: 'Há 2h', icon: 'zap' },
-      { id: 2, type: 'action', text: 'Download do catálogo PDF', time: 'Há 1h', icon: 'file' }
-    ],
-    notes: ""
-  },
-  { 
-    id: 2, 
-    name: 'Juliana Mendes', 
-    status: 'Passagem para closer', 
-    value: 'R$ 1.200.000', 
-    source: 'WhatsApp', 
-    lastActivity: 'Há 5h',
-    score: 92,
-    intelligence: "Investidora repetida. Interessada em unidades garden. Prioridade máxima no fechamento.",
-    activities: [
-      { id: 1, type: 'status', text: 'Proposta enviada', time: 'Há 5h', icon: 'dollar' },
-      { id: 2, type: 'action', text: 'Reunião técnica realizada', time: 'Ontem', icon: 'calendar' }
-    ],
-    notes: "Solicitou detalhes sobre o IPTU."
-  },
-  { 
-    id: 3, 
-    name: 'Condomínio Solar', 
-    status: 'Agendamento', 
-    value: 'R$ 8.500.000', 
-    source: 'Indicação', 
-    lastActivity: 'Ontem',
-    score: 65,
-    intelligence: "Negociação complexa com múltiplos decisores. Requer paciência no acompanhamento jurídico.",
-    activities: [
-      { id: 1, type: 'status', text: 'Em negociação de contrato', time: 'Ontem', icon: 'msg' }
-    ],
-    notes: ""
-  },
-  { 
-    id: 4, 
-    name: 'Beatriz Costa', 
-    status: 'Qualificação', 
-    value: 'R$ 320.000', 
-    source: 'Google', 
-    lastActivity: 'Ontem',
-    score: 78,
-    intelligence: "Busca primeiro imóvel. Perfil conservador. Apresentar opções populares e financiamento fácil.",
-    activities: [
-      { id: 1, type: 'status', text: 'Qualificação aprovada', time: 'Ontem', icon: 'check' }
-    ],
-    notes: ""
-  },
-];
+const INITIAL_LEADS: Lead[] = [];
 
-const INITIAL_EVENTS: Event[] = [
-  { id: 1, day: 15, month: 2, title: 'Reunião: Residencial Orion', time: '10:00', type: 'Reunião', location: 'Google Meet', lead: 'Ricardo Santos' },
-  { id: 2, day: 15, month: 2, title: 'Visita: Vila das Flores', time: '14:30', type: 'Visita', location: 'Alphaville, SP', lead: 'Beatriz Costa' },
-  { id: 3, day: 16, month: 2, title: 'Fechamento de Lead', time: '09:00', type: 'Comercial', location: 'Escritório', lead: 'Juliana Mendes' },
-  { id: 4, day: 20, month: 2, title: 'Apresentação de Projeto', time: '11:00', type: 'Design', location: 'Google Meet', lead: 'Condomínio Solar' },
-];
+const INITIAL_EVENTS: Event[] = [];
+
+import { uazapi } from '../lib/uazapi';
 
 export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [whatsappStatus, setWhatsappStatus] = useState<WhatsAppStatus>('disconnected');
+  const [qrCode, setQrCode] = useState<string | null>(null);
   // Load initial state from localStorage if available
   const [leads, setLeads] = useState<Lead[]>(() => {
     const saved = localStorage.getItem('orion_leads');
@@ -153,6 +102,12 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setLeads(prev => [newLead, ...prev]);
   };
 
+  const importLeads = (newLeads: Omit<Lead, 'id'>[]) => {
+    const startId = Date.now();
+    const formatted = newLeads.map((l, i) => ({ ...l, id: startId + i }));
+    setLeads(prev => [...formatted, ...prev]);
+  };
+
   const addEvent = (event: Omit<Event, 'id'>) => {
     const newEvent = { ...event, id: Date.now() };
     setEvents(prev => [...prev, newEvent]);
@@ -166,8 +121,58 @@ export const CRMProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setLeads(prev => prev.map(lead => lead.id === updatedLead.id ? updatedLead : lead));
   };
 
+  const deleteLead = (id: number) => {
+    setLeads(prev => prev.filter(lead => lead.id !== id));
+  };
+
+  const clearAllData = () => {
+    setLeads([]);
+    setEvents([]);
+    localStorage.removeItem('orion_leads');
+    localStorage.removeItem('orion_events');
+  };
+
+  const updateWhatsAppStatus = async () => {
+    const statusData = await uazapi.getStatus();
+    setWhatsappStatus(statusData.status);
+    if (statusData.status === 'qrcode' && statusData.qrcode) {
+      setQrCode(statusData.qrcode);
+    } else {
+      setQrCode(null);
+    }
+  };
+
+  const sendMessage = async (number: string, text: string) => {
+    const result = await uazapi.sendText(number, text);
+    // Idealmente aqui também registraríamos a atividade no lead correspondente
+    return result;
+  };
+
+  // Check WhatsApp status on mount
+  useEffect(() => {
+    updateWhatsAppStatus();
+    // Opcional: Polling a cada 30s para manter o status atualizado
+    const interval = setInterval(updateWhatsAppStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <CRMContext.Provider value={{ leads, events, updateLeadStatus, addLead, addEvent, deleteEvent, editLead }}>
+    <CRMContext.Provider value={{ 
+      leads, 
+      events, 
+      updateLeadStatus, 
+      addLead, 
+      addEvent, 
+      deleteEvent, 
+      editLead,
+      deleteLead,
+      whatsappStatus,
+      qrCode,
+      updateWhatsAppStatus,
+      sendMessage,
+      importLeads,
+      clearAllData
+    }}>
       {children}
     </CRMContext.Provider>
   );

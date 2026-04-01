@@ -38,7 +38,7 @@ export const Agenda: React.FC = () => {
     <div className="flex flex-col h-full space-y-8 animate-fade-in">
       <header className="flex justify-between items-end">
         <div>
-          <h2 className="text-4xl font-display text-[var(--on-surface)] tracking-tighter italic font-black uppercase">Fluxo de Agenda</h2>
+          <h2 className="text-3xl font-display text-[var(--on-surface)]">Fluxo de Agenda</h2>
           <p className="text-[10px] text-[var(--on-surface-variant)] tracking-[0.3em] uppercase mt-2 font-bold opacity-70">Controle Inteligente de Compromissos e Projetos</p>
         </div>
         <div className="flex bg-[var(--surface-low)] p-1 rounded-2xl border border-[var(--outline)]">

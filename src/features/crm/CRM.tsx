@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Card, Button, Input } from '../../components/ui';
 import { 
   Users,
@@ -59,14 +59,43 @@ export const CRM: React.FC = () => {
   const [isScheduling, setIsScheduling] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ date: 15, time: '14:00', title: 'Reunião de Vendas', location: 'Escritório', status: '' });
 
-  const [columns, setColumns] = useState([
-    { id: 'lead-entrou', title: 'Lead Entrou', status: 'Lead Entrou' },
-    { id: 'primeiro-contato', title: 'Primeiro contato (SDR)', status: 'Primeiro contato' },
-    { id: 'qualificacao', title: 'Qualificação', status: 'Qualificação' },
-    { id: 'educacao', title: 'Educação', status: 'Educação' },
-    { id: 'agendamento', title: 'Agendamento', status: 'Agendamento' },
-    { id: 'closer', title: 'Passagem para closer', status: 'Passagem para closer' },
-  ]);
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      setMenuOpenId(null);
+      
+      const target = e.target as HTMLElement;
+      if (target && !target.closest('.kanban-card') && !target.closest('.sidebar-inteligente')) {
+        setSelectedLeadId(null);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const [columns, setColumns] = useState<{id: string, title: string, status: string, color?: string}[]>(() => {
+    const saved = localStorage.getItem('orion_kanban_columns');
+    if (saved) return JSON.parse(saved);
+    return [
+      { id: 'lead-entrou', title: 'Lead Entrou', status: 'Lead Entrou', color: '#10b981' },
+      { id: 'primeiro-contato', title: 'Primeiro contato (SDR)', status: 'Primeiro contato', color: '#3b82f6' },
+      { id: 'qualificacao', title: 'Qualificação', status: 'Qualificação', color: '#8b5cf6' },
+      { id: 'educacao', title: 'Educação', status: 'Educação', color: '#f59e0b' },
+      { id: 'agendamento', title: 'Agendamento', status: 'Agendamento', color: '#06b6d4' },
+      { id: 'closer', title: 'Passagem para closer', status: 'Passagem para closer', color: '#ec4899' },
+    ];
+  });
+
+  useEffect(() => {
+    localStorage.setItem('orion_kanban_columns', JSON.stringify(columns));
+  }, [columns]);
+
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
+  const [editColName, setEditColName] = useState('');
+  const [editColColor, setEditColColor] = useState('');
+
+  const COLUMN_COLORS = [
+    '#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#64748b', '#06b6d4', '#ec4899'
+  ];
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
 
@@ -78,7 +107,8 @@ export const CRM: React.FC = () => {
   const addColumn = () => {
     if (!newColumnTitle.trim()) return;
     const newId = `col-${Date.now()}`;
-    setColumns([...columns, { id: newId, title: newColumnTitle, status: newColumnTitle }]);
+    const randomColor = COLUMN_COLORS[Math.floor(Math.random() * COLUMN_COLORS.length)];
+    setColumns([...columns, { id: newId, title: newColumnTitle, status: newColumnTitle, color: randomColor }]);
     setNewColumnTitle('');
     setIsAddingColumn(false);
   };
@@ -332,7 +362,7 @@ export const CRM: React.FC = () => {
                       <motion.tr 
                         key={lead.id}
                         onClick={() => setSelectedLeadId(lead.id)}
-                        className={`group cursor-pointer hover:bg-[var(--surface-lowest)] transition-colors ${selectedLeadId === lead.id ? 'bg-[var(--surface-lowest)] border-l-4 border-[var(--primary)]' : ''}`}
+                        className={`kanban-card group cursor-pointer hover:bg-[var(--surface-lowest)] transition-colors ${selectedLeadId === lead.id ? 'bg-[var(--surface-lowest)] border-l-4 border-[var(--primary)]' : ''}`}
                         whileHover={{ x: 4 }}
                       >
                         <td className="px-6 py-6">
@@ -366,14 +396,39 @@ export const CRM: React.FC = () => {
               <div className="flex gap-6 overflow-x-auto pb-4 min-h-[600px]">
                 {columns.map((col) => (
                   <div key={col.id} className="w-80 flex-shrink-0 flex flex-col gap-4">
-                    <div className="flex justify-between items-center px-2">
-                      <h4 className="text-xs font-black uppercase tracking-[0.15em] text-[var(--on-surface-variant)] flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-[var(--primary)]" />
-                        {col.title}
-                      </h4>
-                      <span className="text-[10px] font-bold bg-[var(--surface-high)] px-2 py-0.5 rounded-full text-[var(--on-surface-variant)]">
-                        {filteredLeads.filter(l => l.status === col.status).length}
-                      </span>
+                    <div className="flex justify-between items-center px-2 relative mb-2">
+                      {editingColumnId === col.id ? (
+                         <div className="absolute top-0 left-0 w-full z-10 bg-white p-3 rounded-xl shadow-xl border border-[var(--outline)] flex flex-col gap-3">
+                           <input autoFocus value={editColName} onChange={e => setEditColName(e.target.value)} className="h-8 text-xs font-bold border border-[var(--outline)] rounded px-2 w-full outline-none focus:border-[var(--primary)]" />
+                           <div className="flex gap-2 justify-center">
+                             {COLUMN_COLORS.map(c => (
+                               <button key={c} onClick={() => setEditColColor(c)} className={`w-5 h-5 rounded-full border-2 ${editColColor === c ? 'border-gray-800' : 'border-transparent'}`} style={{ backgroundColor: c }} />
+                             ))}
+                           </div>
+                           <div className="flex gap-2">
+                             <Button size="sm" onClick={() => {
+                               if (!editColName.trim()) return;
+                               setColumns(prev => prev.map(c => c.id === col.id ? { ...c, title: editColName, color: editColColor } : c));
+                               setEditingColumnId(null);
+                             }} className="flex-1 h-8 bg-[var(--primary)] text-white text-[10px] leading-none px-0">Salvar</Button>
+                             <Button size="sm" onClick={() => setEditingColumnId(null)} className="flex-1 h-8 border border-[var(--outline)] text-[var(--on-surface-variant)] text-[10px] leading-none px-0 hover:bg-[var(--surface-low)]">Cancelar</Button>
+                           </div>
+                         </div>
+                      ) : (
+                        <>
+                          <h4 
+                            className="text-xs font-black uppercase tracking-[0.15em] text-[var(--on-surface-variant)] flex items-center gap-2 cursor-pointer hover:opacity-70 transition-opacity"
+                            onClick={() => { setEditColName(col.title); setEditColColor(col.color || '#10b981'); setEditingColumnId(col.id); }}
+                            title="Clique para editar"
+                          >
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: col.color || 'var(--primary)' }} />
+                            {col.title}
+                          </h4>
+                          <span className="text-[10px] font-bold bg-[var(--surface-high)] px-2 py-0.5 rounded-full text-[var(--on-surface-variant)]">
+                            {filteredLeads.filter(l => l.status === col.status).length}
+                          </span>
+                        </>
+                      )}
                     </div>
                     
                     <Droppable droppableId={col.status}>
@@ -391,7 +446,12 @@ export const CRM: React.FC = () => {
                                   {...provided.draggableProps}
                                   {...provided.dragHandleProps}
                                   onClick={() => setSelectedLeadId(lead.id)}
-                                  className={`bg-[var(--surface)] p-5 rounded-xl border border-[var(--outline)] shadow-sm cursor-pointer hover:border-[var(--primary)] transition-all group ${selectedLeadId === lead.id ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''} ${snapshot.isDragging ? 'rotate-2 shadow-2xl scale-105 border-[var(--primary)] z-50' : ''}`}
+                                  className={`kanban-card bg-[var(--surface)] p-5 rounded-xl border border-[var(--outline)] shadow-sm cursor-pointer hover:border-[var(--primary)] transition-colors group ${selectedLeadId === lead.id ? 'ring-2 ring-[var(--primary)] ring-offset-2' : ''} ${snapshot.isDragging ? 'rotate-2 shadow-2xl scale-105 border-[var(--primary)] z-50' : ''}`}
+                                  style={{
+                                    ...provided.draggableProps.style,
+                                    borderLeftColor: lead.color || undefined,
+                                    borderLeftWidth: lead.color ? '4px' : undefined
+                                  }}
                                 >
                                   <div className="flex justify-between items-start mb-4 relative">
                                     <p className="font-['Plus_Jakarta_Sans'] font-bold text-sm text-[var(--on-surface)] group-hover:text-[var(--primary)] transition-colors">{lead.name}</p>
@@ -404,9 +464,26 @@ export const CRM: React.FC = () => {
                                     
                                     {menuOpenId === lead.id && (
                                       <div 
-                                        onMouseLeave={() => setMenuOpenId(null)}
-                                        className="absolute right-0 top-6 w-32 bg-white rounded-lg shadow-xl border border-[var(--outline)] py-1 z-50 animate-in slide-in-from-top-2 duration-200"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute right-0 top-6 w-48 bg-white rounded-lg shadow-xl border border-[var(--outline)] py-1 z-50 animate-in slide-in-from-top-2 duration-200"
                                       >
+                                        <div className="px-4 py-2 border-b border-[var(--outline)] mb-1">
+                                          <p className="text-[10px] font-bold text-[var(--on-surface-variant)] uppercase tracking-wider mb-2">Cor do card</p>
+                                          <div className="flex flex-wrap gap-2">
+                                            {COLUMN_COLORS.map(c => (
+                                              <button 
+                                                key={c}
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  editLead({ ...lead, color: lead.color === c ? undefined : c });
+                                                }}
+                                                className={`w-5 h-5 rounded-full border-2 ${lead.color === c ? 'border-gray-800' : 'border-transparent hover:scale-110'} transition-transform`}
+                                                style={{ backgroundColor: c }}
+                                                title="Aplicar cor"
+                                              />
+                                            ))}
+                                          </div>
+                                        </div>
                                         <button 
                                           onClick={(e) => { 
                                             e.stopPropagation(); 
@@ -498,7 +575,7 @@ export const CRM: React.FC = () => {
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="hidden lg:block flex-shrink-0 overflow-hidden"
             >
-              <div className="w-96 h-full pl-4">
+              <div className="w-96 h-full pl-4 sidebar-inteligente">
                 <Card className="border-l-4 border-[var(--primary)] bg-[var(--surface)] shadow-lg p-8 h-full overflow-y-auto no-scrollbar relative">
                   <div className="flex justify-between items-start mb-8">
                     <div className="relative">
@@ -527,7 +604,22 @@ export const CRM: React.FC = () => {
                        </span>
                     </div>
                     {selectedLead.phone && <p className="text-[11px] font-bold text-[var(--on-surface-variant)] flex items-center gap-2 mt-1"><Phone size={12} className="text-[var(--primary)]" /> {selectedLead.phone}</p>}
-                    {selectedLead.email && <p className="text-[11px] font-bold text-[var(--on-surface-variant)] flex items-center gap-2"><MsgIcon size={12} className="text-[var(--primary)]" /> {selectedLead.email}</p>}
+                    {selectedLead.email && <p className="text-[11px] font-bold text-[var(--on-surface-variant)] flex items-center gap-2 mt-1"><MsgIcon size={12} className="text-[var(--primary)]" /> {selectedLead.email}</p>}
+                    
+                    <div className="mt-4 pt-3 border-t border-[var(--outline)]/30">
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--on-surface-variant)] opacity-70 mb-2">Tag de Cor</p>
+                      <div className="flex flex-wrap gap-2">
+                        {COLUMN_COLORS.map(c => (
+                          <button 
+                            key={c}
+                            onClick={() => editLead({ ...selectedLead, color: selectedLead.color === c ? undefined : c })}
+                            className={`w-6 h-6 rounded-full border-2 ${selectedLead.color === c ? 'border-gray-800 scale-110' : 'border-transparent opacity-60 hover:opacity-100 hover:scale-110'} transition-all`}
+                            style={{ backgroundColor: c }}
+                            title="Marcador de cor"
+                          />
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-6">

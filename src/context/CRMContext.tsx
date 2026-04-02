@@ -21,6 +21,7 @@ export interface Lead {
   notes: string;
   phone?: string;
   email?: string;
+  color?: string;
 }
 
 export interface Event {

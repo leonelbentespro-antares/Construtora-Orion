@@ -576,7 +576,7 @@ export const CRM: React.FC = () => {
               className="hidden lg:block flex-shrink-0 overflow-hidden"
             >
               <div className="w-96 h-full pl-4 sidebar-inteligente">
-                <Card className="border-l-4 border-[var(--primary)] bg-[var(--surface)] shadow-lg p-8 h-full overflow-y-auto no-scrollbar relative">
+                <Card className="border-l-4 border-[var(--primary)] bg-[var(--surface)] shadow-lg p-8 h-full overflow-y-auto pr-2 relative">
                   <div className="flex justify-between items-start mb-8">
                     <div className="relative">
                       <div className="w-20 h-20 rounded-2xl bg-[var(--primary-container)] flex items-center justify-center text-3xl font-['Plus_Jakarta_Sans'] font-black text-[var(--primary)]">
@@ -732,7 +732,7 @@ export const CRM: React.FC = () => {
                   <button onClick={() => setIsAddingLead(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
                 </div>
 
-                <div className="p-8 space-y-6 overflow-y-auto max-h-[70vh] no-scrollbar">
+                <div className="p-8 space-y-6 overflow-y-auto max-h-[70vh] pr-2">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Nome Completo</label>
                     <Input 
@@ -837,7 +837,7 @@ export const CRM: React.FC = () => {
                   <button onClick={() => setIsEditingLead(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
                 </div>
 
-                <div className="p-8 space-y-6 overflow-y-auto max-h-[70vh] no-scrollbar">
+                <div className="p-8 space-y-6 overflow-y-auto max-h-[70vh] pr-2">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Nome Completo</label>
                     <Input 

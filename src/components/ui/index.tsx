@@ -38,17 +38,18 @@ export const Button: React.FC<ButtonProps> = ({
   );
 };
 
-export const Card: React.FC<{
-  children: React.ReactNode;
-  className?: string;
+export const Card: React.FC<React.HTMLAttributes<HTMLDivElement> & {
   elevated?: boolean;
-}> = ({ children, className = '', elevated = false }) => {
+}> = ({ children, className = '', elevated = false, ...props }) => {
   return (
-    <div className={`
-      monolith-card 
-      ${elevated ? 'shadow-ambient' : ''} 
-      ${className}
-    `}>
+    <div 
+      className={`
+        monolith-card 
+        ${elevated ? 'shadow-ambient' : ''} 
+        ${className}
+      `}
+      {...props}
+    >
       {children}
     </div>
   );

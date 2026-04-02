@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Button, Input } from '../../components/ui';
 import {
   MapPin, CheckCircle2, AlertCircle, FileText, DollarSign,
@@ -22,6 +22,8 @@ interface Obra {
   responsavel: string;
   previsao: string;
   saude: number;
+  saudeStatus?: string;
+  responsavelCargo?: string;
   tarefas: Tarefa[];
 }
 
@@ -41,7 +43,8 @@ const OBRAS_INICIAIS: Obra[] = [
     id: 1, nome: 'Orion Residencial II', local: 'Barueri, SP',
     progresso: 62, status: 'Em andamento',
     orcamento: 'R$ 4.500.000', gasto: 'R$ 2.790.000', percentGasto: 62,
-    responsavel: 'Eng. Marcos Souza', previsao: 'Dez 2026', saude: 94,
+    responsavel: 'Eng. Marcos Souza', responsavelCargo: 'Engenheiro Responsável', 
+    previsao: 'Dez 2026', saude: 94, saudeStatus: 'Dentro do cronograma e orçamento.',
     tarefas: [
       { id: 1, titulo: 'Verificação de material — Cimento Votorantim', fase: 'Execução', prioridade: 'ALTA', responsavel: 'Marcos S.', prazo: 'Hoje' },
       { id: 2, titulo: 'Pintura da fachada Leste — Bloco A', fase: 'Execução', prioridade: 'MÉDIA', responsavel: 'Pedro L.', prazo: 'Amanhã' },
@@ -113,16 +116,42 @@ const ProgressBar = ({ value, color = 'var(--primary)' }: { value: number; color
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export const Construction: React.FC = () => {
-  const [obras, setObras] = useState<Obra[]>(OBRAS_INICIAIS);
-  const [obraSelecionada, setObraSelecionada] = useState<Obra>(OBRAS_INICIAIS[0]);
+  const [obras, setObras] = useState<Obra[]>(() => {
+    const saved = localStorage.getItem('orion_construction_obras');
+    return saved ? JSON.parse(saved) : OBRAS_INICIAIS;
+  });
+  const [obraSelecionadaId, setObraSelecionadaId] = useState<number>(obras[0]?.id || 1);
   const [viewTarefas, setViewTarefas] = useState<'kanban' | 'lista'>('kanban');
   const [isNovaObra, setIsNovaObra] = useState(false);
   const [isNovaTarefa, setIsNovaTarefa] = useState(false);
   const [novaObraForm, setNovaObraForm] = useState({ nome: '', local: '', orcamento: '', responsavel: '', previsao: '' });
   const [novaTarefaForm, setNovaTarefaForm] = useState({ titulo: '', fase: 'Execução' as Tarefa['fase'], prioridade: 'MÉDIA' as Tarefa['prioridade'], responsavel: '', prazo: '' });
 
+  // Estados para Edição via Modal
+  const [isEditingObra, setIsEditingObra] = useState(false);
+  const [editObraForm, setEditObraForm] = useState<Partial<Obra>>({});
+  const [isEditingTarefa, setIsEditingTarefa] = useState(false);
+  const [editTarefaForm, setEditTarefaForm] = useState<Partial<Tarefa>>({});
+
   // Atualiza a obra selecionada após mutações
-  const obraAtual = obras.find(o => o.id === obraSelecionada.id) || obras[0];
+  const obraAtual = obras.find(o => o.id === obraSelecionadaId) || obras[0];
+
+  useEffect(() => {
+    localStorage.setItem('orion_construction_obras', JSON.stringify(obras));
+  }, [obras]);
+
+  const updateObraFields = (obraId: number, fields: Partial<Obra>) => {
+    setObras(prev => prev.map(o => o.id === obraId ? { ...o, ...fields } : o));
+  };
+
+  const updateTarefaFields = (tarefaId: number, fields: Partial<Tarefa>) => {
+    setObras(prev => prev.map(o =>
+      o.id === obraAtual.id ? {
+        ...o,
+        tarefas: o.tarefas.map(t => t.id === tarefaId ? { ...t, ...fields } : t)
+      } : o
+    ));
+  };
 
   const salvarNovaObra = () => {
     if (!novaObraForm.nome.trim()) return;
@@ -161,6 +190,31 @@ export const Construction: React.FC = () => {
     ));
   };
 
+  // Funções de Edição via Modal
+  const abrirEdicaoObra = () => {
+    setEditObraForm({ ...obraAtual });
+    setIsEditingObra(true);
+  };
+
+  const salvarEdicaoObra = () => {
+    if (editObraForm.id) {
+      updateObraFields(editObraForm.id, editObraForm);
+      setIsEditingObra(false);
+    }
+  };
+
+  const abrirEdicaoTarefa = (tarefa: Tarefa) => {
+    setEditTarefaForm({ ...tarefa });
+    setIsEditingTarefa(true);
+  };
+
+  const salvarEdicaoTarefa = () => {
+    if (editTarefaForm.id) {
+      updateTarefaFields(editTarefaForm.id, editTarefaForm);
+      setIsEditingTarefa(false);
+    }
+  };
+
   return (
     <div className="space-y-8 h-full">
 
@@ -182,9 +236,9 @@ export const Construction: React.FC = () => {
             key={obra.id}
             whileHover={{ y: -4 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setObraSelecionada(obra)}
+            onClick={() => setObraSelecionadaId(obra.id)}
             className={`rounded-2xl border p-6 cursor-pointer transition-all ${
-              obraAtual.id === obra.id
+              obraAtual?.id === obra.id
                 ? 'border-[var(--primary)] bg-[var(--primary-container)]/20 shadow-lg ring-2 ring-[var(--primary)]/20'
                 : 'border-[var(--outline)] bg-white hover:border-[var(--primary)]/30 hover:shadow-md'
             }`}
@@ -193,9 +247,17 @@ export const Construction: React.FC = () => {
               <div className="w-10 h-10 rounded-xl bg-[var(--primary-container)] flex items-center justify-center">
                 <Building2 size={18} className="text-[var(--primary)]" />
               </div>
-              <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-full ${STATUS_COLOR[obra.status]}`}>
-                {obra.status}
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                <span className={`text-[9px] font-black uppercase px-2 py-1 rounded-full ${STATUS_COLOR[obra.status]}`}>
+                  {obra.status}
+                </span>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); setObraSelecionadaId(obra.id); abrirEdicaoObra(); }}
+                  className="p-1 hover:bg-white rounded-full text-[var(--on-surface-variant)] hover:text-[var(--primary)] transition-all"
+                >
+                  <MoreHorizontal size={14} />
+                </button>
+              </div>
             </div>
             <h3 className="font-bold text-[var(--on-surface)] text-sm mb-1">{obra.nome}</h3>
             <p className="text-[10px] text-[var(--on-surface-variant)] flex items-center gap-1 mb-4">
@@ -216,26 +278,37 @@ export const Construction: React.FC = () => {
         {/* Métricas laterais */}
         <aside className="xl:col-span-1 space-y-4">
           {/* Saúde */}
-          <Card className="p-6 border border-[var(--outline)] bg-white">
+          <Card 
+            onClick={abrirEdicaoObra}
+            className="p-6 border border-[var(--outline)] bg-white cursor-pointer hover:border-[var(--primary)] transition-all group"
+          >
             <div className="flex justify-between items-center mb-2">
               <p className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Saúde da Obra</p>
               <CheckCircle2 size={16} className={obraAtual.saude >= 80 ? 'text-emerald-500' : 'text-amber-500'} />
             </div>
-            <p className={`text-5xl font-black ${obraAtual.saude >= 80 ? 'text-emerald-600' : 'text-amber-500'}`}>{obraAtual.saude}%</p>
+            <div className="flex items-end gap-1">
+              <span className={`text-5xl font-black ${obraAtual.saude >= 80 ? 'text-emerald-600' : 'text-amber-500'}`}>
+                {obraAtual.saude}
+              </span>
+              <span className={`text-5xl font-black ${obraAtual.saude >= 80 ? 'text-emerald-600' : 'text-amber-500'}`}>%</span>
+            </div>
             <p className="text-xs text-[var(--on-surface-variant)] mt-2">
-              {obraAtual.saude >= 80 ? 'Dentro do cronograma e orçamento.' : 'Atenção: revisão necessária.'}
+              {obraAtual.saudeStatus || (obraAtual.saude >= 80 ? 'Dentro do cronograma e orçamento.' : 'Atenção: revisão necessária.')}
             </p>
           </Card>
 
           {/* Financeiro */}
-          <Card className="p-6 border border-[var(--outline)] bg-white space-y-4">
+          <Card 
+            onClick={abrirEdicaoObra}
+            className="p-6 border border-[var(--outline)] bg-white space-y-4 cursor-pointer hover:border-[var(--primary)] transition-all"
+          >
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Financeiro</p>
             <div className="space-y-1">
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-xs items-center gap-2">
                 <span className="text-[var(--on-surface-variant)]">Orçamento</span>
                 <span className="font-bold text-[var(--on-surface)]">{obraAtual.orcamento}</span>
               </div>
-              <div className="flex justify-between text-xs">
+              <div className="flex justify-between text-xs items-center gap-2">
                 <span className="text-[var(--on-surface-variant)]">Gasto</span>
                 <span className="font-bold text-[var(--primary)]">{obraAtual.gasto}</span>
               </div>
@@ -244,19 +317,26 @@ export const Construction: React.FC = () => {
               value={obraAtual.percentGasto}
               color={obraAtual.percentGasto > 85 ? '#f43f5e' : 'var(--primary)'}
             />
-            <p className="text-[10px] text-[var(--on-surface-variant)]">{obraAtual.percentGasto}% do orçamento utilizado</p>
+            <p className="text-[10px] text-[var(--on-surface-variant)] mt-1">
+              {obraAtual.percentGasto}% do orçamento utilizado
+            </p>
           </Card>
 
           {/* Responsável */}
-          <Card className="p-6 border border-[var(--outline)] bg-white space-y-3">
+          <Card 
+            onClick={abrirEdicaoObra}
+            className="p-6 border border-[var(--outline)] bg-white space-y-3 cursor-pointer hover:border-[var(--primary)] transition-all"
+          >
             <p className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Responsável</p>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-[var(--primary-container)] flex items-center justify-center font-black text-[var(--primary)] text-sm">
-                {obraAtual.responsavel.split(' ').map(w => w[0]).join('').slice(0, 2)}
+                {obraAtual.responsavel ? obraAtual.responsavel.split(' ').map(w => w[0] || '').join('').slice(0, 2) : 'EX'}
               </div>
-              <div>
+              <div className="flex-1">
                 <p className="text-sm font-bold text-[var(--on-surface)]">{obraAtual.responsavel}</p>
-                <p className="text-[10px] text-[var(--on-surface-variant)]">Engenheiro Responsável</p>
+                <p className="text-[10px] text-[var(--on-surface-variant)] mt-0.5">
+                  {obraAtual.responsavelCargo || 'Engenheiro Responsável'}
+                </p>
               </div>
             </div>
           </Card>
@@ -280,11 +360,11 @@ export const Construction: React.FC = () => {
 
           {/* Toolbar */}
           <div className="flex justify-between items-center">
-            <div>
+            <div className="flex-1 cursor-pointer" onClick={abrirEdicaoObra}>
               <h3 className="font-bold text-lg text-[var(--on-surface)]">{obraAtual.nome}</h3>
-              <p className="text-[10px] text-[var(--on-surface-variant)] flex items-center gap-1 mt-0.5">
+              <div className="text-[10px] text-[var(--on-surface-variant)] flex items-center gap-1 mt-1">
                 <Calendar size={10} /> Previsão: {obraAtual.previsao} · {obraAtual.tarefas.length} tarefas
-              </p>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="bg-[var(--surface-low)] p-1 rounded-xl flex border border-[var(--outline)]">
@@ -321,9 +401,10 @@ export const Construction: React.FC = () => {
                           layout
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          className="bg-white border border-[var(--outline)] rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[var(--primary)]/30 transition-all group"
+                          onClick={() => abrirEdicaoTarefa(tarefa)}
+                          className="bg-white border border-[var(--outline)] rounded-xl p-4 shadow-sm hover:shadow-md hover:border-[var(--primary)]/30 transition-all group cursor-pointer"
                         >
-                          <p className="text-xs font-bold text-[var(--on-surface)] leading-snug mb-3">{tarefa.titulo}</p>
+                          <h4 className="text-xs font-bold text-[var(--on-surface)] leading-snug mb-3 line-clamp-2">{tarefa.titulo}</h4>
                           <div className="flex items-center justify-between">
                             <span className={`text-[8px] font-black uppercase px-2 py-0.5 rounded-full border ${PRIORIDADE_COLOR[tarefa.prioridade]}`}>
                               {tarefa.prioridade}
@@ -332,7 +413,7 @@ export const Construction: React.FC = () => {
                               {FASES.filter(f => f !== fase).map(f => (
                                 <button
                                   key={f}
-                                  onClick={() => moverTarefa(tarefa.id, f)}
+                                  onClick={(e) => { e.stopPropagation(); moverTarefa(tarefa.id, f); }}
                                   title={`Mover para ${f}`}
                                   className="text-[7px] font-black uppercase px-1.5 py-0.5 rounded bg-[var(--surface-low)] text-[var(--on-surface-variant)] hover:bg-[var(--primary)] hover:text-white transition-all"
                                 >
@@ -340,19 +421,20 @@ export const Construction: React.FC = () => {
                                 </button>
                               ))}
                               <button
-                                onClick={() => excluirTarefa(tarefa.id)}
+                                onClick={(e) => { e.stopPropagation(); excluirTarefa(tarefa.id); }}
                                 className="text-[8px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-400 hover:bg-rose-500 hover:text-white transition-all"
                               >✕</button>
                             </div>
                           </div>
                           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[var(--outline)]/40">
                             <div className="w-5 h-5 rounded-full bg-[var(--surface-high)] flex items-center justify-center text-[8px] font-black text-[var(--on-surface-variant)]">
-                              {tarefa.responsavel[0]}
+                              {tarefa.responsavel ? tarefa.responsavel[0] : 'U'}
                             </div>
-                            <span className="text-[9px] text-[var(--on-surface-variant)] truncate">{tarefa.responsavel}</span>
-                            <span className="text-[9px] text-[var(--on-surface-variant)] ml-auto flex items-center gap-0.5">
-                              <Clock size={8} /> {tarefa.prazo}
-                            </span>
+                            <span className="text-[9px] text-[var(--on-surface-variant)]">{tarefa.responsavel}</span>
+                            <div className="text-[9px] text-[var(--on-surface-variant)] ml-auto flex items-center gap-0.5">
+                              <Clock size={8} />
+                              <span>{tarefa.prazo}</span>
+                            </div>
                           </div>
                         </motion.div>
                       ))}
@@ -417,7 +499,7 @@ export const Construction: React.FC = () => {
         </section>
       </div>
 
-      {/* ── Modal: Nova Obra ────────────────────────────────────────────── */}
+      {/* ── Modal: Novo Obra ────────────────────────────────────────────── */}
       <AnimatePresence>
         {isNovaObra && (
           <motion.div
@@ -455,8 +537,76 @@ export const Construction: React.FC = () => {
                 ))}
               </div>
               <div className="p-8 bg-[var(--surface-lowest)] border-t border-[var(--outline)] flex gap-3">
-                <Button onClick={() => setIsNovaObra(false)} variant="ghost" className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest border border-[var(--outline)]">Cancelar</Button>
-                <Button onClick={salvarNovaObra} variant="primary" className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] shadow-lg">Criar Obra</Button>
+                <button onClick={() => setIsNovaObra(false)} className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest border border-[var(--outline)] rounded-xl hover:bg-[var(--surface-low)] transition-all">Cancelar</button>
+                <button onClick={salvarNovaObra} className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] shadow-lg rounded-xl hover:opacity-90 transition-all">Criar Obra</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Modal: Edição de Obra ────────────────────────────────────────── */}
+      <AnimatePresence>
+        {isEditingObra && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden"
+            >
+              <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-emerald-50">
+                <div>
+                  <h3 className="text-xl font-black text-[var(--on-surface)]">Editar Dados da Obra</h3>
+                  <p className="text-[10px] font-black text-[var(--primary)] uppercase tracking-[0.2em] mt-1">Sintonizado com Orion Design</p>
+                </div>
+                <button onClick={() => setIsEditingObra(false)} className="p-2 hover:bg-emerald-100 rounded-full transition-colors"><X size={20} /></button>
+              </div>
+              <div className="p-8 space-y-4 max-h-[60vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1 col-span-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Nome do Projeto</label>
+                    <Input className="h-12 font-bold" value={editObraForm.nome} onChange={e => setEditObraForm(p => ({ ...p, nome: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Localização</label>
+                    <Input className="h-12 font-bold" value={editObraForm.local} onChange={e => setEditObraForm(p => ({ ...p, local: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Previsão</label>
+                    <Input className="h-12 font-bold" value={editObraForm.previsao} onChange={e => setEditObraForm(p => ({ ...p, previsao: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Saúde (%)</label>
+                    <Input type="number" className="h-12 font-bold text-emerald-600" value={editObraForm.saude} onChange={e => setEditObraForm(p => ({ ...p, saude: Number(e.target.value) }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Progresso (%)</label>
+                    <Input type="number" className="h-12 font-bold" value={editObraForm.progresso} onChange={e => setEditObraForm(p => ({ ...p, progresso: Number(e.target.value) }))} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Status da Saúde</label>
+                    <Input className="h-12" value={editObraForm.saudeStatus} onChange={e => setEditObraForm(p => ({ ...p, saudeStatus: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Orçamento</label>
+                    <Input className="h-12 font-bold" value={editObraForm.orcamento} onChange={e => setEditObraForm(p => ({ ...p, orcamento: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Gasto Real</label>
+                    <Input className="h-12 font-bold text-[var(--primary)]" value={editObraForm.gasto} onChange={e => setEditObraForm(p => ({ ...p, gasto: e.target.value }))} />
+                  </div>
+                  <div className="space-y-1 col-span-2">
+                    <hr className="my-2 opacity-10" />
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Responsável</label>
+                    <Input className="h-12 font-bold" value={editObraForm.responsavel} onChange={e => setEditObraForm(p => ({ ...p, responsavel: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-8 bg-[var(--surface-lowest)] border-t border-[var(--outline)] flex gap-3">
+                <button onClick={() => setIsEditingObra(false)} className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest border border-[var(--outline)] rounded-xl hover:bg-[var(--surface-low)] transition-all">Descartar</button>
+                <button onClick={salvarEdicaoObra} className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] shadow-lg rounded-xl hover:opacity-90 transition-all">Salvar Alterações</button>
               </div>
             </motion.div>
           </motion.div>
@@ -514,30 +664,78 @@ export const Construction: React.FC = () => {
                     </select>
                   </div>
                 </div>
+              </div>
+              <div className="p-8 bg-[var(--surface-lowest)] border-t border-[var(--outline)] flex gap-3">
+                <button onClick={() => setIsNovaTarefa(false)} className="flex-1 h-12 font-bold uppercase text-[10px] border border-[var(--outline)] rounded-xl hover:bg-[var(--surface-low)] transition-all">Cancelar</button>
+                <button onClick={salvarNovaTarefa} className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] shadow-lg rounded-xl hover:opacity-90 transition-all">Criar Tarefa</button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Modal: Edição de Tarefa ──────────────────────────────────────── */}
+      <AnimatePresence>
+        {isEditingTarefa && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden"
+            >
+              <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-blue-50">
+                <div>
+                  <h3 className="text-xl font-black text-[var(--on-surface)]">Detalhes da Tarefa</h3>
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Gestão Inteligente</p>
+                </div>
+                <button onClick={() => setIsEditingTarefa(false)} className="p-2 hover:bg-blue-100 rounded-full transition-colors"><X size={20} /></button>
+              </div>
+              <div className="p-8 space-y-5">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Título da Tarefa</label>
+                  <textarea
+                    className="w-full p-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] focus:ring-2 focus:ring-blue-500/20 outline-none resize-none"
+                    rows={3}
+                    value={editTarefaForm.titulo}
+                    onChange={e => setEditTarefaForm(p => ({ ...p, titulo: e.target.value }))}
+                  />
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Fase</label>
+                    <select
+                      className="w-full h-12 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)]"
+                      value={editTarefaForm.fase}
+                      onChange={e => setEditTarefaForm(p => ({ ...p, fase: e.target.value as Tarefa['fase'] }))}
+                    >
+                      {FASES.map(f => <option key={f}>{f}</option>)}
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Prioridade</label>
+                    <select
+                      className="w-full h-12 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)]"
+                      value={editTarefaForm.prioridade}
+                      onChange={e => setEditTarefaForm(p => ({ ...p, prioridade: e.target.value as Tarefa['prioridade'] }))}
+                    >
+                      <option>ALTA</option><option>MÉDIA</option><option>BAIXA</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Responsável</label>
-                    <Input
-                      placeholder="Ex: Eng. Rafael"
-                      className="h-12 text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] rounded-xl"
-                      value={novaTarefaForm.responsavel}
-                      onChange={e => setNovaTarefaForm(prev => ({ ...prev, responsavel: e.target.value }))}
-                    />
+                    <Input className="h-12 font-bold" value={editTarefaForm.responsavel} onChange={e => setEditTarefaForm(p => ({ ...p, responsavel: e.target.value }))} />
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Prazo</label>
-                    <Input
-                      placeholder="Ex: 10/04"
-                      className="h-12 text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] rounded-xl"
-                      value={novaTarefaForm.prazo}
-                      onChange={e => setNovaTarefaForm(prev => ({ ...prev, prazo: e.target.value }))}
-                    />
+                    <Input className="h-12 font-bold" value={editTarefaForm.prazo} onChange={e => setEditTarefaForm(p => ({ ...p, prazo: e.target.value }))} />
                   </div>
                 </div>
               </div>
               <div className="p-8 bg-[var(--surface-lowest)] border-t border-[var(--outline)] flex gap-3">
-                <Button onClick={() => setIsNovaTarefa(false)} variant="ghost" className="flex-1 h-12 font-bold uppercase text-[10px] border border-[var(--outline)]">Cancelar</Button>
-                <Button onClick={salvarNovaTarefa} variant="primary" className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] shadow-lg">Criar Tarefa</Button>
+                <button onClick={() => { if (editTarefaForm.id) { excluirTarefa(editTarefaForm.id); setIsEditingTarefa(false); } }} className="flex-1 h-12 font-bold uppercase text-[10px] border border-rose-200 text-rose-500 rounded-xl hover:bg-rose-50 transition-all">Excluir</button>
+                <button onClick={salvarEdicaoTarefa} className="flex-[2] h-12 bg-blue-600 text-white font-black uppercase text-[10px] shadow-lg rounded-xl hover:bg-blue-700 transition-all">Salvar Tarefa</button>
               </div>
             </motion.div>
           </motion.div>

@@ -51,7 +51,7 @@ export const CRM: React.FC = () => {
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const [searchTerm, setSearchTerm] = useState('');
   const [isAddingLead, setIsAddingLead] = useState(false);
-  const [newLeadForm, setNewLeadForm] = useState({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
+  const [newLeadForm, setNewLeadForm] = useState({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou', notes: '' });
 
   const [isEditingLead, setIsEditingLead] = useState(false);
   const [editLeadForm, setEditLeadForm] = useState({ id: 0, name: '', phone: '', email: '', value: '', source: '', status: '', notes: '' });
@@ -141,11 +141,11 @@ export const CRM: React.FC = () => {
       activities: [
         { id: Date.now(), type: 'status', text: 'Lead cadastrado no sistema', time: 'Agora', icon: 'user' }
       ],
-      notes: ""
+      notes: newLeadForm.notes || ""
     });
     
     setIsAddingLead(false);
-    setNewLeadForm({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou' });
+    setNewLeadForm({ name: '', phone: '', email: '', value: '', source: 'WhatsApp', status: 'Lead Entrou', notes: '' });
   };
 
   const openAddLead = (status = 'Lead Entrou') => {
@@ -732,7 +732,7 @@ export const CRM: React.FC = () => {
                   <button onClick={() => setIsAddingLead(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
                 </div>
 
-                <div className="p-8 space-y-6">
+                <div className="p-8 space-y-6 overflow-y-auto max-h-[70vh] no-scrollbar">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Nome Completo</label>
                     <Input 
@@ -790,6 +790,19 @@ export const CRM: React.FC = () => {
                       </select>
                     </div>
                   </div>
+
+                  <div className="space-y-2 mt-6">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] flex items-center gap-2">
+                      <FileText size={12} className="text-[var(--primary)]" />
+                      Anotações do Cliente
+                    </label>
+                    <textarea 
+                      placeholder="Adicione observações importantes sobre o contato, necessidades, restrições..." 
+                      className="w-full p-4 rounded-xl text-sm bg-[var(--surface-lowest)] border-none focus:ring-2 ring-[var(--primary)] min-h-[120px] resize-y transition-all placeholder:text-[var(--on-surface-variant)]/40"
+                      value={newLeadForm.notes}
+                      onChange={(e) => setNewLeadForm({...newLeadForm, notes: e.target.value})}
+                    />
+                  </div>
                 </div>
 
                 <div className="p-8 bg-[var(--surface-lowest)] flex gap-3">
@@ -824,7 +837,7 @@ export const CRM: React.FC = () => {
                   <button onClick={() => setIsEditingLead(false)} className="p-2 hover:bg-white rounded-full transition-colors"><X size={20} /></button>
                 </div>
 
-                <div className="p-8 space-y-6">
+                <div className="p-8 space-y-6 overflow-y-auto max-h-[70vh] no-scrollbar">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Nome Completo</label>
                     <Input 

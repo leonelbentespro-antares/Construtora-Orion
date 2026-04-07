@@ -6,13 +6,15 @@ import { Construction } from './features/construction/Construction';
 import { Chat } from './features/chat/Chat';
 import { Agenda } from './features/agenda/Agenda';
 import { CRMProvider } from './context/CRMContext';
+import { SettingsProvider } from './context/SettingsContext';
 import { SettingsView } from './features/settings/SettingsView';
 
 
 function App() {
   return (
-    <CRMProvider>
-      <BrowserRouter>
+    <SettingsProvider>
+      <CRMProvider>
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<Dashboard />} />
@@ -24,7 +26,8 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </CRMProvider>
+      </CRMProvider>
+    </SettingsProvider>
   );
 }
 

@@ -733,12 +733,12 @@ export const Construction: React.FC = () => {
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Fase</label>
-                    <select
-                      className="w-full h-12 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                      value={novaTarefaForm.fase}
-                      onChange={e => setNovaTarefaForm(prev => ({ ...prev, fase: e.target.value }))}
+                  <div>
+                    <label className="text-[10px] font-black uppercase text-[var(--on-surface-variant)] mb-1.5 block tracking-widest">Fase</label>
+                    <select 
+                      className="w-full h-12 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)]"
+                      value={novaTarefaForm.fase} 
+                      onChange={e => setNovaTarefaForm(prev => ({ ...prev, fase: e.target.value as Tarefa['fase'] }))}
                     >
                       {colunas.map(c => <option key={c.id} value={c.titulo}>{c.titulo}</option>)}
                     </select>
@@ -746,13 +746,11 @@ export const Construction: React.FC = () => {
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Prioridade</label>
                     <select
-                      className="w-full h-12 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)] outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                      className="w-full h-12 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)]"
                       value={novaTarefaForm.prioridade}
                       onChange={e => setNovaTarefaForm(prev => ({ ...prev, prioridade: e.target.value as Tarefa['prioridade'] }))}
                     >
-                      <option value="ALTA">ALTA</option>
-                      <option value="MÉDIA">MÉDIA</option>
-                      <option value="BAIXA">BAIXA</option>
+                      <option>ALTA</option><option>MÉDIA</option><option>BAIXA</option>
                     </select>
                   </div>
                 </div>
@@ -777,14 +775,14 @@ export const Construction: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0 }}
               className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden"
             >
-              <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-blue-50/50">
+              <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-blue-50">
                 <div>
-                  <h3 className="text-xl font-black text-[var(--on-surface)]">Editar Tarefa</h3>
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Configurações Avançadas</p>
+                  <h3 className="text-xl font-black text-[var(--on-surface)]">Detalhes da Tarefa</h3>
+                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-1">Gestão Inteligente</p>
                 </div>
                 <button onClick={() => setIsEditingTarefa(false)} className="p-2 hover:bg-blue-100 rounded-full transition-colors"><X size={20} /></button>
               </div>
-              <div className="p-8 space-y-6">
+              <div className="p-8 space-y-5">
                 <div className="space-y-1">
                   <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Título da Tarefa</label>
                   <textarea
@@ -800,7 +798,7 @@ export const Construction: React.FC = () => {
                     <select
                       className="w-full h-12 px-4 rounded-xl text-sm font-bold bg-[var(--surface-lowest)] border border-[var(--outline)]"
                       value={editTarefaForm.fase}
-                      onChange={e => setEditTarefaForm(p => ({ ...p, fase: e.target.value }))}
+                      onChange={e => setEditTarefaForm(p => ({ ...p, fase: e.target.value as Tarefa['fase'] }))}
                     >
                       {colunas.map(c => <option key={c.id} value={c.titulo}>{c.titulo}</option>)}
                     </select>
@@ -812,14 +810,9 @@ export const Construction: React.FC = () => {
                       value={editTarefaForm.prioridade}
                       onChange={e => setEditTarefaForm(p => ({ ...p, prioridade: e.target.value as Tarefa['prioridade'] }))}
                     >
-                      <option value="ALTA">ALTA</option>
-                      <option value="MÉDIA">MÉDIA</option>
-                      <option value="BAIXA">BAIXA</option>
+                      <option>ALTA</option><option>MÉDIA</option><option>BAIXA</option>
                     </select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Responsável</label>
                     <Input className="h-12 font-bold" value={editTarefaForm.responsavel} onChange={e => setEditTarefaForm(p => ({ ...p, responsavel: e.target.value }))} />
@@ -829,40 +822,10 @@ export const Construction: React.FC = () => {
                     <Input className="h-12 font-bold" value={editTarefaForm.prazo} onChange={e => setEditTarefaForm(p => ({ ...p, prazo: e.target.value }))} />
                   </div>
                 </div>
-
-                <div>
-                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)] mb-3 block">Cor Personalizada</label>
-                  <div className="flex flex-wrap gap-2">
-                    <button 
-                      onClick={() => setEditTarefaForm(p => ({ ...p, color: undefined }))}
-                      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${!editTarefaForm.color ? 'border-black scale-110' : 'border-transparent opacity-40'}`}
-                    >
-                      <div className="w-4 h-4 rounded-full bg-slate-200" />
-                    </button>
-                    {COLUMN_COLORS.map(c => (
-                      <button 
-                        key={c} 
-                        onClick={() => setEditTarefaForm(p => ({ ...p, color: c }))} 
-                        className={`w-8 h-8 rounded-full border-2 transition-all ${editTarefaForm.color === c ? 'border-black scale-110' : 'border-transparent opacity-40 hover:opacity-100 hover:scale-110'}`} 
-                        style={{ backgroundColor: c }} 
-                      />
-                    ))}
-                  </div>
-                </div>
               </div>
               <div className="p-8 bg-[var(--surface-lowest)] border-t border-[var(--outline)] flex gap-3">
-                <button 
-                  onClick={() => { if (editTarefaForm.id) { excluirTarefa(editTarefaForm.id); setIsEditingTarefa(false); } }} 
-                  className="flex-1 h-12 font-bold uppercase text-[10px] border border-rose-200 text-rose-500 rounded-xl hover:bg-rose-50 transition-all"
-                >
-                  Excluir
-                </button>
-                <button 
-                  onClick={salvarEdicaoTarefa} 
-                  className="flex-[2] h-12 bg-blue-600 text-white font-black uppercase text-[10px] shadow-lg rounded-xl hover:bg-blue-700 transition-all font-black"
-                >
-                  Salvar Alterações
-                </button>
+                <button onClick={() => { if (editTarefaForm.id) { excluirTarefa(editTarefaForm.id); setIsEditingTarefa(false); } }} className="flex-1 h-12 font-bold uppercase text-[10px] border border-rose-200 text-rose-500 rounded-xl hover:bg-rose-50 transition-all">Excluir</button>
+                <button onClick={salvarEdicaoTarefa} className="flex-[2] h-12 bg-blue-600 text-white font-black uppercase text-[10px] shadow-lg rounded-xl hover:bg-blue-700 transition-all">Salvar Tarefa</button>
               </div>
             </motion.div>
           </motion.div>

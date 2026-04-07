@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Card, Button } from '../../components/ui';
+import React, { useState, useEffect } from 'react';
+import { Card, Button, Input } from '../../components/ui';
 import { 
   Smartphone, 
   CheckCircle2, 
@@ -9,15 +9,28 @@ import {
   Shield,
   Zap,
   Globe,
-  Palette
+  Palette,
+  X
 } from 'lucide-react';
 import { useCRM } from '../../context/CRMContext';
+import { useSettings } from '../../context/SettingsContext';
+import { uazapi } from '../../lib/uazapi';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const SettingsView: React.FC = () => {
   const { whatsappStatus, qrCode, updateWhatsAppStatus } = useCRM();
+  const { settings, updateSettings } = useSettings();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
+  const [formSettings, setFormSettings] = useState(settings);
+
+  useEffect(() => {
+    setFormSettings(settings);
+  }, [settings]);
 
   const handleRefreshStatus = async () => {
     setIsRefreshing(true);
@@ -56,10 +69,13 @@ export const SettingsView: React.FC = () => {
           </div>
           <h3 className="text-xl font-bold text-[var(--on-surface)] mb-1">API & Webhooks</h3>
           <p className="text-[var(--on-surface-variant)] text-sm mb-6">Integrações ativas com UAZAPI e Supabase.</p>
-          <div className="flex items-center gap-2 text-emerald-600 text-[10px] font-bold uppercase">
-            <CheckCircle2 size={14} />
-            Endpoints Saudáveis
-          </div>
+          <Button 
+            onClick={() => setShowIntegrationsModal(true)}
+            variant="ghost" 
+            className="text-[10px] uppercase font-bold tracking-widest text-[var(--primary)] border-[var(--primary)]/20"
+          >
+            Gerenciar Integrações
+          </Button>
         </Card>
 
         <Card className="p-6 border-[var(--outline)]">
@@ -224,6 +240,147 @@ export const SettingsView: React.FC = () => {
                     Fechar e Sair
                   </Button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Modal de Integrações */}
+      <AnimatePresence>
+        {showIntegrationsModal && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden"
+            >
+              <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-slate-50">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight">API & Webhooks</h3>
+                  <p className="text-[10px] text-[var(--primary)] uppercase font-black tracking-widest mt-1">Configurações de Integração</p>
+                </div>
+                <button onClick={() => setShowIntegrationsModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">ID da Instância (Subdomínio)</label>
+                    <Input 
+                      placeholder="Ex: orion-api" 
+                      value={formSettings.uazapiSubdomain}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormSettings(prev => ({ ...prev, uazapiSubdomain: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Token UAZAPI</label>
+                    <Input 
+                      type="password"
+                      placeholder="••••••••••••••••" 
+                      value={formSettings.uazapiToken}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormSettings(prev => ({ ...prev, uazapiToken: e.target.value }))}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">URL do Webhook (Recebimento)</label>
+                  <Input 
+                    placeholder="https://seu-servidor.com/webhook" 
+                    value={formSettings.webhookUrl}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormSettings(prev => ({ ...prev, webhookUrl: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-[var(--on-surface-variant)] mt-2 italic">A URL que receberá notificações do WhatsApp.</p>
+                </div>
+
+                {testResult && (
+                  <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-3 ${testResult.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100' : 'bg-rose-50 text-rose-700 border border-rose-100'}`}>
+                    {testResult.type === 'success' ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
+                    {testResult.message}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap gap-3 pt-4">
+                  <Button 
+                    onClick={async () => {
+                      setIsTesting(true);
+                      setTestResult(null);
+                      try {
+                        // Temporariamente atualizar settings para o teste
+                        const oldSettings = settings;
+                        localStorage.setItem('orion_settings', JSON.stringify(formSettings));
+                        const status = await uazapi.getStatus();
+                        if (status.status !== 'disconnected') {
+                          setTestResult({ type: 'success', message: 'Conexão estabelecida com sucesso!' });
+                        } else {
+                          setTestResult({ type: 'error', message: 'Instância encontrada, mas desconectada.' });
+                        }
+                        // Restaurar ou manter? Vamos manter se deu certo
+                      } catch (e) {
+                        setTestResult({ type: 'error', message: 'Falha na conexão. Verifique o Token e ID.' });
+                      } finally {
+                        setIsTesting(false);
+                      }
+                    }}
+                    disabled={isTesting}
+                    variant="ghost" 
+                    className="h-12 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2 border-[var(--outline)]"
+                  >
+                    {isTesting ? <RefreshCcw size={14} className="animate-spin" /> : <RefreshCcw size={14} />}
+                    Testar Conexão
+                  </Button>
+
+                  <Button 
+                    onClick={async () => {
+                      if (!formSettings.webhookUrl) {
+                        setTestResult({ type: 'error', message: 'Informe uma URL de Webhook válida.' });
+                        return;
+                      }
+                      setIsTesting(true);
+                      try {
+                        localStorage.setItem('orion_settings', JSON.stringify(formSettings));
+                        await uazapi.setupWebhook(formSettings.webhookUrl);
+                        setTestResult({ type: 'success', message: 'Webhook sincronizado com a UAZAPI!' });
+                      } catch (e) {
+                        setTestResult({ type: 'error', message: 'Erro ao configurar Webhook.' });
+                      } finally {
+                        setIsTesting(false);
+                      }
+                    }}
+                    disabled={isTesting}
+                    variant="ghost" 
+                    className="h-12 text-[10px] uppercase font-bold tracking-widest flex items-center gap-2 border-[var(--outline)]"
+                  >
+                    <ExternalLink size={14} />
+                    Sincronizar Webhook
+                  </Button>
+                </div>
+              </div>
+
+              <div className="p-8 bg-slate-50 border-t border-[var(--outline)] flex gap-3">
+                <Button 
+                  onClick={() => setShowIntegrationsModal(false)}
+                  variant="ghost" 
+                  className="flex-1 h-12 font-bold uppercase text-[10px] tracking-widest"
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={() => {
+                    updateSettings(formSettings);
+                    setShowIntegrationsModal(false);
+                  }}
+                  variant="primary" 
+                  className="flex-[2] h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg"
+                >
+                  Salvar Configurações
+                </Button>
               </div>
             </motion.div>
           </motion.div>

@@ -1,22 +1,44 @@
 import { UAZInstanceStatus, UAZMessage, UAZSendMessageRequest } from '../types/uazapi';
 
-const SUBDOMAIN = import.meta.env.VITE_UAZAPI_SUBDOMAIN;
-const TOKEN = import.meta.env.VITE_UAZAPI_TOKEN;
-const BASE_URL = `https://${SUBDOMAIN}.uazapi.com`;
+const getHeaders = () => {
+  const saved = localStorage.getItem('orion_settings');
+  let token = import.meta.env.VITE_UAZAPI_TOKEN;
+  
+  if (saved) {
+    try {
+      const settings = JSON.parse(saved);
+      if (settings.uazapiToken) token = settings.uazapiToken;
+    } catch (e) {}
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    'token': token || ''
+  };
+};
+
+const getBaseUrl = () => {
+  const saved = localStorage.getItem('orion_settings');
+  let subdomain = import.meta.env.VITE_UAZAPI_SUBDOMAIN;
+  
+  if (saved) {
+    try {
+      const settings = JSON.parse(saved);
+      if (settings.uazapiSubdomain) subdomain = settings.uazapiSubdomain;
+    } catch (e) {}
+  }
+  
+  return `https://${subdomain}.uazapi.com`;
+};
 
 class UAZService {
-  private headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    'token': TOKEN
-  };
-
   /**
    * Verifica o status da conexão da instância de WhatsApp.
    */
   async getStatus(): Promise<UAZInstanceStatus> {
     try {
-      const response = await fetch(`${BASE_URL}/instance/status`, {
-        headers: this.headers
+      const response = await fetch(`${getBaseUrl()}/instance/status`, {
+        headers: getHeaders()
       });
       if (!response.ok) throw new Error('Erro ao buscar status da instância');
       return await response.json();
@@ -32,9 +54,9 @@ class UAZService {
   async sendText(number: string, text: string): Promise<any> {
     try {
       const body: UAZSendMessageRequest = { number, text };
-      const response = await fetch(`${BASE_URL}/send/text`, {
+      const response = await fetch(`${getBaseUrl()}/send/text`, {
         method: 'POST',
-        headers: this.headers,
+        headers: getHeaders(),
         body: JSON.stringify(body)
       });
       if (!response.ok) throw new Error('Erro ao enviar mensagem');
@@ -50,9 +72,9 @@ class UAZService {
    */
   async setupWebhook(url: string): Promise<any> {
     try {
-      const response = await fetch(`${BASE_URL}/webhook`, {
+      const response = await fetch(`${getBaseUrl()}/webhook`, {
         method: 'POST',
-        headers: this.headers,
+        headers: getHeaders(),
         body: JSON.stringify({
           enabled: true,
           url,

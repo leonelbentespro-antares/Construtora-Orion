@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "google-ads": {
+      "command": "python3",
+      "args": ["-m", "pipx", "run", "--spec", "git+https://github.com/googleads/google-ads-mcp.git", "google-ads-mcp"],
+      "env": {
+        "GOOGLE_ADS_CONFIGURATION_FILE_PATH": "/root/.google-ads.yaml"
+      }
+    }
+  }
+}

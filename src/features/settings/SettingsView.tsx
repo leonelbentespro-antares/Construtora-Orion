@@ -1,20 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Input } from '../../components/ui';
-import { 
-  Smartphone, 
-  CheckCircle2, 
-  AlertCircle, 
-  RefreshCcw, 
+import {
+  Smartphone,
+  CheckCircle2,
+  AlertCircle,
+  RefreshCcw,
   ExternalLink,
   Shield,
   Zap,
   Globe,
   Palette,
-  X
+  X,
+  TrendingUp,
+  Link2,
+  Link2Off,
 } from 'lucide-react';
 import { useCRM } from '../../context/CRMContext';
 import { useSettings } from '../../context/SettingsContext';
 import { uazapi } from '../../lib/uazapi';
+import { googleAds } from '../../lib/googleAds';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const SettingsView: React.FC = () => {
@@ -23,8 +27,14 @@ export const SettingsView: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [showIntegrationsModal, setShowIntegrationsModal] = useState(false);
+  const [showGoogleAdsModal, setShowGoogleAdsModal] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+  const [googleAdsForm, setGoogleAdsForm] = useState({
+    customerId: settings.googleAdsCustomerId,
+    clientId: settings.googleAdsClientId,
+    developerToken: settings.googleAdsDeveloperToken,
+  });
 
   const [formSettings, setFormSettings] = useState(settings);
 
@@ -240,6 +250,199 @@ export const SettingsView: React.FC = () => {
                     Fechar e Sair
                   </Button>
                 </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Google Ads Section */}
+      <section>
+        <div className="flex items-center gap-3 mb-6">
+          <TrendingUp className="text-[var(--primary)]" size={24} />
+          <h2 className="text-2xl font-display font-bold text-[var(--on-surface)] uppercase tracking-tight">Google Ads</h2>
+        </div>
+
+        <Card className="overflow-hidden border border-[var(--outline)] shadow-sm bg-[var(--surface-lowest)]">
+          <div className="flex flex-col md:flex-row divide-y md:divide-y-0 md:divide-x divide-[var(--outline-variant)]/30">
+            {/* Status Panel */}
+            <div className="p-8 md:w-1/2 space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase font-black tracking-[0.2em] text-[var(--on-surface-variant)] mb-2">Status da Conexão</p>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${settings.googleAdsConnected ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.4)]' : 'bg-slate-400'}`} />
+                    <span className="text-lg font-bold text-[var(--on-surface)]">
+                      {settings.googleAdsConnected ? 'Conta Conectada' : 'Não Conectado'}
+                    </span>
+                  </div>
+                </div>
+                {settings.googleAdsConnected && (
+                  <div className="p-2 bg-emerald-50 rounded-xl">
+                    <CheckCircle2 size={20} className="text-emerald-600" />
+                  </div>
+                )}
+              </div>
+
+              {settings.googleAdsCustomerId && (
+                <div className="p-4 rounded-2xl bg-[var(--surface-low)] border border-[var(--outline)]/10">
+                  <p className="text-[10px] uppercase font-black tracking-widest text-[var(--on-surface-variant)] mb-1">Customer ID</p>
+                  <p className="text-sm font-bold text-[var(--on-surface)] font-mono">{settings.googleAdsCustomerId}</p>
+                </div>
+              )}
+
+              <div className="p-4 rounded-2xl bg-[var(--surface-low)] border border-[var(--outline)]/10 flex items-start gap-3">
+                <Shield size={18} className="text-[var(--primary)] mt-1 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold text-[var(--on-surface)]">OAuth 2.0 Seguro</p>
+                  <p className="text-[10px] text-[var(--on-surface-variant)] leading-relaxed">Suas credenciais são armazenadas localmente e nunca compartilhadas com terceiros.</p>
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-wrap gap-3">
+                <Button
+                  onClick={() => setShowGoogleAdsModal(true)}
+                  variant="primary"
+                  className="px-8 h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  {settings.googleAdsConnected ? 'Reconfigurar' : 'Conectar Conta'}
+                </Button>
+                {settings.googleAdsConnected && (
+                  <Button
+                    onClick={() => updateSettings({ googleAdsConnected: false, googleAdsCustomerId: '', googleAdsClientId: '', googleAdsDeveloperToken: '' })}
+                    variant="ghost"
+                    className="h-12 text-rose-600 border border-rose-200 hover:bg-rose-50 font-black uppercase text-[10px] tracking-widest flex items-center gap-2"
+                  >
+                    <Link2Off size={14} /> Desconectar
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Instructions Panel */}
+            <div className="p-8 md:w-1/2 bg-[var(--surface-low)]/30">
+              <p className="text-[10px] uppercase font-black tracking-[0.2em] text-[var(--on-surface-variant)] mb-6">Como Conectar</p>
+              <ol className="space-y-6">
+                <li className="flex gap-4">
+                  <span className="w-6 h-6 rounded-full bg-[var(--primary-container)] text-[var(--primary)] text-[10px] font-black flex items-center justify-center shrink-0">1</span>
+                  <p className="text-xs text-[var(--on-surface)] leading-relaxed">Acesse o <strong>Google Ads</strong> e vá em <strong>Ferramentas &gt; Central de API</strong> para obter seu Developer Token.</p>
+                </li>
+                <li className="flex gap-4">
+                  <span className="w-6 h-6 rounded-full bg-[var(--primary-container)] text-[var(--primary)] text-[10px] font-black flex items-center justify-center shrink-0">2</span>
+                  <p className="text-xs text-[var(--on-surface)] leading-relaxed">No <strong>Google Cloud Console</strong>, crie um projeto e configure as credenciais OAuth 2.0 para obter o Client ID.</p>
+                </li>
+                <li className="flex gap-4">
+                  <span className="w-6 h-6 rounded-full bg-[var(--primary-container)] text-[var(--primary)] text-[10px] font-black flex items-center justify-center shrink-0">3</span>
+                  <p className="text-xs text-[var(--on-surface)] leading-relaxed">Preencha o formulário com seu <strong>Customer ID</strong>, <strong>Client ID</strong> e <strong>Developer Token</strong>, depois clique em Conectar.</p>
+                </li>
+              </ol>
+
+              {settings.googleAdsConnected && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-8 p-4 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3"
+                >
+                  <CheckCircle2 size={20} className="text-emerald-600" />
+                  <p className="text-xs font-bold text-emerald-800 tracking-tight">Google Ads Integrado com Sucesso!</p>
+                </motion.div>
+              )}
+            </div>
+          </div>
+        </Card>
+      </section>
+
+      {/* Modal Google Ads */}
+      <AnimatePresence>
+        {showGoogleAdsModal && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/40 backdrop-blur-md"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[var(--outline)] overflow-hidden"
+            >
+              <div className="p-8 border-b border-[var(--outline)] flex justify-between items-center bg-slate-50">
+                <div>
+                  <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    <TrendingUp size={20} className="text-[var(--primary)]" />
+                    Conectar Google Ads
+                  </h3>
+                  <p className="text-[10px] text-[var(--primary)] uppercase font-black tracking-widest mt-1">Integração de Campanhas</p>
+                </div>
+                <button onClick={() => setShowGoogleAdsModal(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-8 space-y-5">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Customer ID do Google Ads</label>
+                  <Input
+                    placeholder="Ex: 123-456-7890"
+                    value={googleAdsForm.customerId}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoogleAdsForm(prev => ({ ...prev, customerId: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-[var(--on-surface-variant)] italic">Encontrado no canto superior direito da sua conta Google Ads.</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">OAuth Client ID</label>
+                  <Input
+                    placeholder="Ex: 123456789.apps.googleusercontent.com"
+                    value={googleAdsForm.clientId}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoogleAdsForm(prev => ({ ...prev, clientId: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-[var(--on-surface-variant)] italic">Obtido no Google Cloud Console &gt; APIs e Serviços &gt; Credenciais.</p>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">Developer Token</label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••••••••••"
+                    value={googleAdsForm.developerToken}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGoogleAdsForm(prev => ({ ...prev, developerToken: e.target.value }))}
+                  />
+                  <p className="text-[10px] text-[var(--on-surface-variant)] italic">Em Google Ads &gt; Ferramentas &gt; Central de API.</p>
+                </div>
+
+                <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 flex items-start gap-3">
+                  <AlertCircle size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] text-blue-900 leading-relaxed">
+                    Após salvar, clique em <strong>"Autorizar via Google"</strong> para concluir a autenticação OAuth e liberar o acesso às métricas.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-8 bg-slate-50 border-t border-[var(--outline)] flex flex-col gap-3">
+                <Button
+                  onClick={() => {
+                    if (!googleAdsForm.customerId || !googleAdsForm.clientId || !googleAdsForm.developerToken) return;
+                    updateSettings({
+                      googleAdsCustomerId: googleAdsForm.customerId,
+                      googleAdsClientId: googleAdsForm.clientId,
+                      googleAdsDeveloperToken: googleAdsForm.developerToken,
+                      googleAdsConnected: true,
+                    });
+                    googleAds.initiateOAuth(googleAdsForm.clientId);
+                    setShowGoogleAdsModal(false);
+                  }}
+                  variant="primary"
+                  disabled={!googleAdsForm.customerId || !googleAdsForm.clientId || !googleAdsForm.developerToken}
+                  className="w-full h-12 bg-[var(--primary)] text-white font-black uppercase text-[10px] tracking-widest shadow-lg flex items-center justify-center gap-2"
+                >
+                  <Link2 size={14} /> Salvar e Autorizar via Google
+                </Button>
+                <Button
+                  onClick={() => setShowGoogleAdsModal(false)}
+                  variant="ghost"
+                  className="w-full h-12 font-bold uppercase text-[10px] tracking-widest"
+                >
+                  Cancelar
+                </Button>
               </div>
             </motion.div>
           </motion.div>

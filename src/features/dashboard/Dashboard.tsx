@@ -1,17 +1,22 @@
 import React from 'react';
 import { Card, Button } from '../../components/ui';
-import { 
-  TrendingUp, 
-  Users, 
-  HardHat, 
-  BarChart3, 
-  ArrowUpRight, 
+import {
+  TrendingUp,
+  Users,
+  HardHat,
+  BarChart3,
+  ArrowUpRight,
   ArrowDownRight,
   Clock,
   MapPin,
-  ChevronRight
+  ChevronRight,
+  MousePointerClick,
+  Eye,
+  Target,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useSettings } from '../../context/SettingsContext';
+import { googleAds } from '../../lib/googleAds';
 
 const MetricCard = ({ title, value, change, isPositive, icon: Icon }: any) => (
   <Card className="flex flex-col gap-4">
@@ -66,6 +71,90 @@ const ProjectCard = ({ title, location, progress, status }: any) => (
     </div>
   </div>
 );
+
+const statusColor: Record<string, string> = {
+  ENABLED: 'text-emerald-600 bg-emerald-50 border-emerald-100',
+  PAUSED: 'text-amber-600 bg-amber-50 border-amber-100',
+  REMOVED: 'text-slate-500 bg-slate-100 border-slate-200',
+};
+
+const statusLabel: Record<string, string> = {
+  ENABLED: 'Ativa',
+  PAUSED: 'Pausada',
+  REMOVED: 'Removida',
+};
+
+const GoogleAdsWidget: React.FC = () => {
+  const { settings } = useSettings();
+  const metrics = googleAds.getMockMetrics();
+
+  if (!settings.googleAdsConnected) {
+    return (
+      <Card className="flex flex-col items-center justify-center text-center gap-4 py-12 border border-dashed border-[var(--outline)]">
+        <div className="p-4 rounded-full bg-[var(--surface-high)]">
+          <TrendingUp size={28} className="text-[var(--on-surface-variant)]" />
+        </div>
+        <div>
+          <h4 className="font-bold text-[var(--on-surface)] mb-1">Google Ads não conectado</h4>
+          <p className="text-xs text-[var(--on-surface-variant)]">Configure a integração em Configurações para ver métricas de campanhas.</p>
+        </div>
+        <a href="/settings" className="text-[10px] uppercase font-black tracking-widest text-[var(--primary)] hover:underline">
+          Ir para Configurações →
+        </a>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: 'Gasto Total', value: googleAds.formatBRL(metrics.totalSpend), icon: TrendingUp },
+          { label: 'Cliques', value: metrics.totalClicks.toLocaleString('pt-BR'), icon: MousePointerClick },
+          { label: 'Impressões', value: (metrics.totalImpressions / 1000).toFixed(1) + 'K', icon: Eye },
+          { label: 'Conversões', value: String(metrics.totalConversions), icon: Target },
+        ].map((m, i) => (
+          <div key={i} className="p-4 rounded-2xl bg-[var(--surface-high)] border border-[var(--outline-variant)]/10 space-y-2">
+            <div className="flex items-center gap-2 text-[var(--on-surface-variant)]">
+              <m.icon size={14} />
+              <span className="text-[10px] uppercase font-black tracking-widest">{m.label}</span>
+            </div>
+            <p className="text-xl font-display font-bold text-[var(--tertiary)]">{m.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="overflow-hidden rounded-2xl border border-[var(--outline-variant)]/20">
+        <table className="w-full text-xs">
+          <thead className="bg-[var(--surface-high)]">
+            <tr>
+              {['Campanha', 'Status', 'Cliques', 'CTR', 'CPC Médio', 'Custo', 'Conversões'].map(h => (
+                <th key={h} className="px-4 py-3 text-left text-[10px] font-black uppercase tracking-widest text-[var(--on-surface-variant)]">{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--outline-variant)]/10">
+            {metrics.campaigns.map(c => (
+              <tr key={c.id} className="hover:bg-[var(--surface-low)]/50 transition-colors">
+                <td className="px-4 py-3 font-semibold text-[var(--on-surface)]">{c.name}</td>
+                <td className="px-4 py-3">
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusColor[c.status]}`}>
+                    {statusLabel[c.status]}
+                  </span>
+                </td>
+                <td className="px-4 py-3 text-[var(--on-surface-variant)]">{c.clicks.toLocaleString('pt-BR')}</td>
+                <td className="px-4 py-3 text-[var(--on-surface-variant)]">{c.ctr.toFixed(2)}%</td>
+                <td className="px-4 py-3 text-[var(--on-surface-variant)]">{googleAds.formatBRL(c.cpc)}</td>
+                <td className="px-4 py-3 font-semibold text-[var(--on-surface)]">{googleAds.formatBRL(c.cost)}</td>
+                <td className="px-4 py-3 text-emerald-600 font-bold">{c.conversions}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
 
 export const Dashboard: React.FC = () => {
   return (
@@ -200,6 +289,20 @@ export const Dashboard: React.FC = () => {
             <Button variant="primary" className="w-full mt-6 bg-[var(--background)] text-white hover:bg-black">Acelerar Leads</Button>
           </Card>
         </aside>
+      </section>
+
+      {/* Google Ads Section */}
+      <section>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="text-[var(--primary)]" size={24} />
+            <h2 className="text-2xl font-display text-[var(--on-surface)] uppercase italic tracking-tighter">Google Ads</h2>
+          </div>
+          <a href="/settings" className="text-[10px] uppercase font-bold tracking-widest text-[var(--primary)] hover:underline flex items-center gap-1">
+            Configurar <ChevronRight size={12} />
+          </a>
+        </div>
+        <GoogleAdsWidget />
       </section>
     </div>
   );

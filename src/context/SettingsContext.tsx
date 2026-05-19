@@ -4,6 +4,10 @@ interface Settings {
   uazapiSubdomain: string;
   uazapiToken: string;
   webhookUrl: string;
+  googleAdsCustomerId: string;
+  googleAdsClientId: string;
+  googleAdsDeveloperToken: string;
+  googleAdsConnected: boolean;
 }
 
 interface SettingsContextType {
@@ -20,6 +24,10 @@ const DEFAULT_SETTINGS: Settings = {
   uazapiSubdomain: import.meta.env.VITE_UAZAPI_SUBDOMAIN || '',
   uazapiToken: import.meta.env.VITE_UAZAPI_TOKEN || '',
   webhookUrl: '',
+  googleAdsCustomerId: '',
+  googleAdsClientId: '',
+  googleAdsDeveloperToken: '',
+  googleAdsConnected: false,
 };
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {

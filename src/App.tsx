@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Layout } from './components/Layout';
 import { Dashboard } from './features/dashboard/Dashboard';
 import { CRM } from './features/crm/CRM';
@@ -8,26 +9,42 @@ import { Agenda } from './features/agenda/Agenda';
 import { CRMProvider } from './context/CRMContext';
 import { SettingsProvider } from './context/SettingsContext';
 import { SettingsView } from './features/settings/SettingsView';
+import { Landing } from './features/landing/Landing';
+import { LoginPage } from './features/auth/LoginPage';
+import { SignupPage } from './features/auth/SignupPage';
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { staleTime: 5 * 60 * 1000, retry: 1 },
+  },
+});
 
 function App() {
   return (
-    <SettingsProvider>
-      <CRMProvider>
-        <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="crm" element={<CRM />} />
-            <Route path="obras" element={<Construction />} />
-            <Route path="chat" element={<Chat />} />
-            <Route path="agenda" element={<Agenda />} />
-            <Route path="settings" element={<SettingsView />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-      </CRMProvider>
-    </SettingsProvider>
+    <QueryClientProvider client={queryClient}>
+      <SettingsProvider>
+        <CRMProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* JurisFlow routes */}
+              <Route path="/jurisflow" element={<Landing />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/cadastro" element={<SignupPage />} />
+
+              {/* Legacy Orion CRM routes */}
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Dashboard />} />
+                <Route path="crm" element={<CRM />} />
+                <Route path="obras" element={<Construction />} />
+                <Route path="chat" element={<Chat />} />
+                <Route path="agenda" element={<Agenda />} />
+                <Route path="settings" element={<SettingsView />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </CRMProvider>
+      </SettingsProvider>
+    </QueryClientProvider>
   );
 }
 

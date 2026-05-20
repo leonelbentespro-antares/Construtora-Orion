@@ -12,6 +12,10 @@ import { SettingsView } from './features/settings/SettingsView';
 import { Landing } from './features/landing/Landing';
 import { LoginPage } from './features/auth/LoginPage';
 import { SignupPage } from './features/auth/SignupPage';
+import { ClientLayout } from './features/portal/ClientLayout';
+import { ClientDashboard } from './features/portal/Dashboard';
+import { Consultas } from './features/portal/Consultas';
+import { Documentos } from './features/portal/Documentos';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -30,6 +34,11 @@ function App() {
               <Route path="/jurisflow" element={<Landing />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/cadastro" element={<SignupPage />} />
+              <Route path="/portal" element={<ClientLayout />}>
+                <Route path="dashboard"   element={<ClientDashboard />} />
+                <Route path="consultas"   element={<Consultas />} />
+                <Route path="documentos"  element={<Documentos />} />
+              </Route>
 
               {/* Legacy Orion CRM routes */}
               <Route path="/" element={<Layout />}>

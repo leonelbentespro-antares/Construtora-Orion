@@ -11,6 +11,8 @@ import { useMultiStep } from './useMultiStep'
 import { variants, spring } from '../../lib/motion'
 import { useAuth } from '../../context/AuthContext'
 
+import { AFFILIATE_CPA, AFFILIATE_RECURRING_PCT, PLAN_VALUES } from '../../lib/payments/asaas'
+
 type Role = 'client' | 'lawyer' | null
 
 // ─── Role Selection ───────────────────────────────────────────────────────────
@@ -199,6 +201,14 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
           {currentStep === 0 && (
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-[#1D1D1F]">Sobre sua empresa</h2>
+
+              {/* Affiliate teaser pill */}
+              <div className="flex items-center gap-2 bg-[#EFF6FF] border border-[#BFDBFE] rounded-[10px] px-3 py-2">
+                <span className="text-base shrink-0">🤝</span>
+                <p className="text-xs text-[#1D4ED8] font-medium flex-1">
+                  Ao criar sua conta você entra automaticamente no <strong>Programa de Afiliados</strong> — indique empresas e ganhe comissão por cada contrato fechado.
+                </p>
+              </div>
               <Input
                 label="Nome da empresa"
                 placeholder="Empresa Exemplo Ltda"
@@ -258,30 +268,85 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-[#1D1D1F]">Escolha seu plano</h2>
               <div className="space-y-3">
-                {PLANS.map((plan) => (
-                  <button
-                    key={plan.key}
-                    type="button"
-                    onClick={() => setData((d) => ({ ...d, plan: plan.key }))}
-                    className={[
-                      'w-full text-left p-4 rounded-[12px] border-2 transition-all duration-150 cursor-pointer',
-                      data.plan === plan.key
-                        ? 'border-[#2563EB] bg-[#EFF6FF]'
-                        : 'border-[#E5E5EA] bg-white hover:border-[#86868B]',
-                    ].join(' ')}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-semibold text-sm text-[#1D1D1F]">{plan.name}</span>
-                        {plan.highlight && (
-                          <Badge variant="blue" size="sm" className="ml-2">Popular</Badge>
-                        )}
+                {PLANS.map((plan) => {
+                  const cpa = AFFILIATE_CPA[plan.key]
+                  const rec = Math.floor(PLAN_VALUES[plan.key] * AFFILIATE_RECURRING_PCT)
+                  return (
+                    <button
+                      key={plan.key}
+                      type="button"
+                      onClick={() => setData((d) => ({ ...d, plan: plan.key }))}
+                      className={[
+                        'w-full text-left p-4 rounded-[12px] border-2 transition-all duration-150 cursor-pointer',
+                        data.plan === plan.key
+                          ? 'border-[#2563EB] bg-[#EFF6FF]'
+                          : 'border-[#E5E5EA] bg-white hover:border-[#86868B]',
+                      ].join(' ')}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-semibold text-sm text-[#1D1D1F]">{plan.name}</span>
+                          {plan.highlight && (
+                            <Badge variant="blue" size="sm" className="ml-2">Popular</Badge>
+                          )}
+                        </div>
+                        <span className="text-sm font-semibold text-[#1D1D1F]">{plan.price}</span>
                       </div>
-                      <span className="text-sm font-semibold text-[#1D1D1F]">{plan.price}</span>
-                    </div>
-                  </button>
-                ))}
+                      {/* Affiliate earning hint per plan */}
+                      <p className="text-[11px] text-[#6E6E73] mt-1.5">
+                        🤝 Indique e ganhe <strong className="text-[#15803D]">R${cpa}</strong> por conversão
+                        {' '}+ <strong className="text-[#15803D]">R${rec}/mês</strong> recorrente
+                      </p>
+                    </button>
+                  )
+                })}
               </div>
+
+              {/* Affiliate Program Full Card */}
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="bg-gradient-to-br from-[#F0FDF4] to-[#DCFCE7] border border-[#86EFAC] rounded-[14px] p-4"
+              >
+                <div className="flex items-start gap-2.5">
+                  <span className="text-lg shrink-0 mt-0.5">🤝</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-[#15803D]">
+                      Programa de Afiliados — incluso em todos os planos
+                    </p>
+                    <p className="text-xs text-[#166534] mt-0.5 mb-3 leading-relaxed">
+                      Ao ativar sua conta você recebe um link de indicação único.
+                      Cada empresa que contratar via seu link gera comissão para você,
+                      paga 30 dias após a assinatura.
+                    </p>
+
+                    <div className="grid grid-cols-3 gap-2 mb-3">
+                      {(
+                        [
+                          { label: 'Essencial',    cpa: AFFILIATE_CPA.essencial,    rec: Math.floor(PLAN_VALUES.essencial    * AFFILIATE_RECURRING_PCT) },
+                          { label: 'Profissional', cpa: AFFILIATE_CPA.profissional, rec: Math.floor(PLAN_VALUES.profissional * AFFILIATE_RECURRING_PCT) },
+                          { label: 'Empresarial',  cpa: AFFILIATE_CPA.empresarial,  rec: Math.floor(PLAN_VALUES.empresarial  * AFFILIATE_RECURRING_PCT) },
+                        ] as const
+                      ).map(({ label, cpa, rec }) => (
+                        <div key={label} className="bg-white/80 rounded-[10px] p-2.5 text-center border border-white">
+                          <p className="text-[10px] text-[#6E6E73] font-medium mb-1">{label}</p>
+                          <p className="text-base font-bold text-[#15803D]">R${cpa}</p>
+                          <p className="text-[10px] text-[#6E6E73]">+ R${rec}/mês</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="bg-white/60 rounded-[8px] px-3 py-2">
+                      <p className="text-[11px] text-[#166534] leading-relaxed">
+                        <strong>Exemplo:</strong> indicou uma empresa que assinou o Profissional →
+                        você recebe <strong>R$498</strong> no mês 1 e mais <strong>R$99/mês</strong> enquanto
+                        ela ficar ativa. Em 6 meses = <strong>R$1.092 acumulados</strong> de uma única indicação.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           )}
 
@@ -314,6 +379,17 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
                   <a href="#" className="text-[#2563EB] underline">Política de Privacidade (LGPD)</a>
                 </span>
               </label>
+
+              {/* Affiliate reminder on final step */}
+              <div className="flex items-start gap-2 bg-[#F0FDF4] border border-[#86EFAC] rounded-[10px] px-3 py-2.5">
+                <span className="text-base shrink-0">✅</span>
+                <p className="text-xs text-[#15803D] leading-relaxed">
+                  <strong>Programa de Afiliados ativado automaticamente.</strong>{' '}
+                  Ao concluir o cadastro você já receberá seu link de indicação no portal.
+                  Ganhe até <strong>R${AFFILIATE_CPA.empresarial}</strong> por empresa indicada
+                  + <strong>{(AFFILIATE_RECURRING_PCT * 100).toFixed(0)}% do valor</strong> do plano todo mês.
+                </p>
+              </div>
             </div>
           )}
         </motion.div>

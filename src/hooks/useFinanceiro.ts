@@ -92,6 +92,36 @@ export function useClientSubscription() {
   })
 }
 
+export function useAdminLawyerRanking() {
+  return useQuery({
+    queryKey: ['admin-lawyer-ranking'],
+    queryFn:  async () => {
+      const [{ data: reviews }, { data: lawyers }] = await Promise.all([
+        supabase.schema('jurisflow').from('lawyer_reviews').select('lawyer_id, rating'),
+        supabase.schema('jurisflow').from('lawyers')
+          .select('id, oab_state, oab_number, status, profile:profiles(full_name)')
+          .eq('status', 'active'),
+      ])
+
+      const reviewMap: Record<string, { total: number; count: number }> = {}
+      for (const r of reviews ?? []) {
+        if (!reviewMap[r.lawyer_id]) reviewMap[r.lawyer_id] = { total: 0, count: 0 }
+        reviewMap[r.lawyer_id].total += r.rating
+        reviewMap[r.lawyer_id].count += 1
+      }
+
+      return (lawyers ?? [])
+        .map((l) => ({
+          ...l,
+          avg_rating:   reviewMap[l.id] ? reviewMap[l.id].total / reviewMap[l.id].count : 0,
+          review_count: reviewMap[l.id]?.count ?? 0,
+        }))
+        .sort((a, b) => b.avg_rating - a.avg_rating || b.review_count - a.review_count)
+    },
+    refetchInterval: 60_000,
+  })
+}
+
 export function useUpdateProfile() {
   const { user, refreshProfile } = useAuth()
   const qc = useQueryClient()

@@ -1,13 +1,16 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Badge, StatusBadge } from '../../components/ui/Badge'
+import { StarRating } from '../../components/ui/StarRating'
 import { variants } from '../../lib/motion'
 import { useClientDashboard } from '../../hooks/useDashboard'
 import { useAuth } from '../../context/AuthContext'
 import { getSLAStatus, getRemainingText } from '../../lib/sla'
+import { useLawyerReviews, avgRating } from '../../hooks/useReviews'
+import { LawyerProfileModal } from './LawyerProfileModal'
 import type { Consultation, Document as JFDocument } from '../../lib/database.types'
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -87,9 +90,14 @@ const DocumentCard: React.FC<{ d: PartialDocument }> = ({ d }) => (
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export const ClientDashboard: React.FC = () => {
-  const { profile, company } = useAuth()
-  const { data, isLoading }  = useClientDashboard()
-  const navigate             = useNavigate()
+  const { profile, company }   = useAuth()
+  const { data, isLoading }    = useClientDashboard()
+  const navigate               = useNavigate()
+  const [showLawyerProfile, setShowLawyerProfile] = useState(false)
+
+  const assignedLawyerId = (data?.assignedLawyer as any)?.id ?? null
+  const { data: lawyerReviews = [] } = useLawyerReviews(assignedLawyerId)
+  const lawyerAvg = avgRating(lawyerReviews)
 
   const planName   = data?.subscription?.plan?.name ?? '—'
   const planKey    = data?.subscription?.plan?.key ?? ''
@@ -228,30 +236,39 @@ export const ClientDashboard: React.FC = () => {
               <Badge variant="green" dot>Disponível</Badge>
             </CardHeader>
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-full bg-[#DBEAFE] flex items-center justify-center text-sm font-semibold text-[#1D4ED8] shrink-0">
-                {(data.assignedLawyer as any).profile?.full_name
-                  ?.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() ?? '?'}
+              {/* Avatar */}
+              <div className="flex flex-col items-center gap-1.5 shrink-0">
+                <div className="w-14 h-14 rounded-full bg-[#DBEAFE] flex items-center justify-center text-base font-semibold text-[#1D4ED8]">
+                  {(data.assignedLawyer as any).profile?.full_name
+                    ?.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() ?? '?'}
+                </div>
+                {/* Estrelas abaixo da foto */}
+                <StarRating value={lawyerAvg} size="sm" showValue={lawyerReviews.length > 0} />
+                <p className="text-[10px] text-[#86868B]">
+                  {lawyerReviews.length === 0 ? 'Sem avaliações' : `${lawyerReviews.length} avaliação${lawyerReviews.length > 1 ? 'ões' : ''}`}
+                </p>
               </div>
+
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-[#1D1D1F]">
                   {(data.assignedLawyer as any).profile?.full_name ?? '—'}
                 </p>
                 <p className="text-sm text-[#6E6E73]">
                   OAB/{(data.assignedLawyer as any).oab_state} {(data.assignedLawyer as any).oab_number}
-                  {(data.assignedLawyer as any).specialties?.length > 0
-                    ? ` · ${(data.assignedLawyer as any).specialties.slice(0, 2).join(', ')}`
-                    : ''}
                 </p>
-                {(data.assignedLawyer as any).rating && (
-                  <div className="flex items-center gap-1.5 mt-1.5">
-                    <span className="text-[#F59E0B] text-sm">★★★★★</span>
-                    <span className="text-xs text-[#86868B]">
-                      {(data.assignedLawyer as any).rating.toFixed(1)}
-                    </span>
+                {(data.assignedLawyer as any).specialties?.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-1.5">
+                    {(data.assignedLawyer as any).specialties.slice(0, 3).map((s: string) => (
+                      <Badge key={s} variant="blue" size="sm">{s}</Badge>
+                    ))}
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 shrink-0">
+
+              <div className="flex flex-col gap-2 shrink-0">
+                <Button variant="primary" size="sm" onClick={() => setShowLawyerProfile(true)}>
+                  Ver perfil
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => navigate('/portal/consultas')}>
                   Mensagem
                 </Button>
@@ -260,6 +277,11 @@ export const ClientDashboard: React.FC = () => {
           </Card>
         </motion.div>
       )}
+
+      <LawyerProfileModal
+        lawyer={showLawyerProfile ? (data?.assignedLawyer as any) : null}
+        onClose={() => setShowLawyerProfile(false)}
+      />
     </motion.div>
   )
 }

@@ -8,10 +8,14 @@ import { variants } from '../../lib/motion'
 import { useAuth } from '../../context/AuthContext'
 import { useUpdateProfile } from '../../hooks/useFinanceiro'
 import { supabase } from '../../lib/supabase'
+import { StarRating } from '../../components/ui/StarRating'
+import { useLawyerReviews, avgRating } from '../../hooks/useReviews'
 
 export const LawyerConfiguracoes: React.FC = () => {
   const { profile, lawyer, signOut, refreshProfile } = useAuth()
   const updateProfile = useUpdateProfile()
+  const { data: reviews = [] } = useLawyerReviews(lawyer?.id)
+  const avg = avgRating(reviews)
 
   const [fullName, setFullName] = useState(profile?.full_name ?? '')
   const [pixKey,   setPixKey]   = useState((lawyer as any)?.pix_key ?? '')
@@ -65,6 +69,21 @@ export const LawyerConfiguracoes: React.FC = () => {
               {lawyer?.status ?? '—'}
             </Badge>
           </CardHeader>
+          {/* Rating below profile header */}
+          <div className="flex items-center gap-3 mt-3 p-3 bg-[#FAFAFA] rounded-[10px]">
+            <div className="w-12 h-12 rounded-full bg-[#DBEAFE] flex items-center justify-center text-sm font-bold text-[#1D4ED8] shrink-0">
+              {(profile?.full_name ?? '?').split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase()}
+            </div>
+            <div>
+              <StarRating value={avg} size="md" showValue={reviews.length > 0} />
+              <p className="text-xs text-[#86868B] mt-0.5">
+                {reviews.length === 0
+                  ? 'Nenhuma avaliação ainda'
+                  : `${reviews.length} avaliação${reviews.length > 1 ? 'ões' : ''} de clientes`}
+              </p>
+            </div>
+          </div>
+
           <div className="space-y-4 mt-2">
             <Input
               label="Nome completo"

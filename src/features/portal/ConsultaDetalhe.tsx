@@ -5,8 +5,10 @@ import { useConsultation, useSendMessage } from '../../hooks/useConsultations'
 import { useAuth } from '../../context/AuthContext'
 import { Button } from '../../components/ui/Button'
 import { Badge, StatusBadge } from '../../components/ui/Badge'
+import { StarRating } from '../../components/ui/StarRating'
 import { getSLAStatus, getRemainingText, getSLAColorClass } from '../../lib/sla'
 import { variants } from '../../lib/motion'
+import { useMyReviewForConsultation, useSubmitReview } from '../../hooks/useReviews'
 
 const AREA_LABELS: Record<string, string> = {
   trabalhista: 'Trabalhista', tributario: 'Tributário',
@@ -18,12 +20,19 @@ const AREA_LABELS: Record<string, string> = {
 export const ConsultaDetalhe: React.FC = () => {
   const { id }       = useParams<{ id: string }>()
   const navigate     = useNavigate()
-  const { user }     = useAuth()
+  const { user, profile } = useAuth()
   const { data: consultation, isLoading } = useConsultation(id!)
   const sendMessage  = useSendMessage()
 
-  const [text,       setText]       = useState('')
-  const messagesEnd  = useRef<HTMLDivElement>(null)
+  const [text,        setText]       = useState('')
+  const [reviewRating,setReviewRating] = useState(0)
+  const [reviewComment,setReviewComment] = useState('')
+  const [reviewDone,  setReviewDone] = useState(false)
+  const messagesEnd   = useRef<HTMLDivElement>(null)
+
+  const lawyerId    = (consultation as any)?.lawyer_id ?? null
+  const { data: existingReview } = useMyReviewForConsultation(id)
+  const submitReview = useSubmitReview()
 
   useEffect(() => {
     messagesEnd.current?.scrollIntoView({ behavior: 'smooth' })
@@ -182,8 +191,69 @@ export const ConsultaDetalhe: React.FC = () => {
           <p className="text-xs text-[#86868B] mt-1.5">Shift+Enter para nova linha</p>
         </motion.div>
       ) : (
-        <div className="mt-4 border-t border-[#E5E5EA] pt-4 text-center">
-          <p className="text-sm text-[#86868B]">Esta consulta está encerrada.</p>
+        <div className="mt-4 border-t border-[#E5E5EA] pt-4">
+          <p className="text-sm text-center text-[#86868B] mb-4">Esta consulta está encerrada.</p>
+
+          {/* Review section — only for clients with a lawyer assigned */}
+          {profile?.role === 'client' && lawyerId && (
+            existingReview || reviewDone ? (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#F0FDF4] border border-[#86EFAC] rounded-[14px] p-4 text-center"
+              >
+                <p className="text-sm font-medium text-[#15803D]">✓ Avaliação enviada</p>
+                <StarRating value={existingReview?.rating ?? reviewRating} size="md" />
+                {(existingReview?.comment || reviewComment) && (
+                  <p className="text-xs text-[#6E6E73] mt-1 italic">
+                    &ldquo;{existingReview?.comment ?? reviewComment}&rdquo;
+                  </p>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[#FAFAFA] border border-[#E5E5EA] rounded-[14px] p-4 space-y-3"
+              >
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-[#1D1D1F]">Avalie o atendimento</p>
+                  <p className="text-xs text-[#86868B] mt-0.5">Como foi o atendimento do advogado?</p>
+                </div>
+                <div className="flex justify-center">
+                  <StarRating
+                    value={reviewRating}
+                    size="lg"
+                    interactive
+                    onChange={setReviewRating}
+                  />
+                </div>
+                <textarea
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Deixe um comentário sobre o atendimento (opcional)..."
+                  rows={3}
+                  className="w-full resize-none rounded-[10px] border border-[#D1D1D6] px-3 py-2.5 text-sm text-[#1D1D1F] placeholder:text-[#86868B] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                />
+                <Button
+                  variant="primary"
+                  size="md"
+                  fullWidth
+                  disabled={reviewRating === 0}
+                  loading={submitReview.isPending}
+                  onClick={async () => {
+                    if (!id || !lawyerId || reviewRating === 0) return
+                    await submitReview.mutateAsync({
+                      lawyerId, consultationId: id, rating: reviewRating, comment: reviewComment,
+                    })
+                    setReviewDone(true)
+                  }}
+                >
+                  Enviar avaliação
+                </Button>
+              </motion.div>
+            )
+          )}
         </div>
       )}
     </motion.div>

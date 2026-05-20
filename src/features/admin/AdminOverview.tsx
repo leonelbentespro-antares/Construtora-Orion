@@ -2,12 +2,14 @@ import React from 'react'
 import { motion } from 'framer-motion'
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
+import { StarRating } from '../../components/ui/StarRating'
 import { variants } from '../../lib/motion'
-import { useAdminStats } from '../../hooks/useFinanceiro'
+import { useAdminStats, useAdminLawyerRanking } from '../../hooks/useFinanceiro'
 import { getSLAStatus } from '../../lib/sla'
 
 export const AdminOverview: React.FC = () => {
-  const { data, isLoading } = useAdminStats()
+  const { data, isLoading }        = useAdminStats()
+  const { data: ranking = [] }     = useAdminLawyerRanking()
 
   const slaData    = data?.slaData ?? []
   const critical   = slaData.filter((c: any) => getSLAStatus(new Date(c.sla_deadline)) === 'critical')
@@ -104,6 +106,49 @@ export const AdminOverview: React.FC = () => {
                   {slaData.length} consultas · {critical.length} críticas · {warning.length} atenção
                 </p>
               </>
+            )}
+          </Card>
+        </motion.div>
+
+        {/* Lawyer Ranking */}
+        <motion.div variants={variants.fadeUp}>
+          <Card variant="default" padding="none">
+            <div className="p-5 border-b border-[#E5E5EA]">
+              <CardTitle>Ranking de advogados</CardTitle>
+            </div>
+            {ranking.length === 0 ? (
+              <div className="p-8 text-center text-[#86868B]">
+                <p className="text-2xl mb-2">⭐</p>
+                <p className="text-sm">Nenhuma avaliação ainda.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-[#F5F5F7]">
+                {ranking.map((l: any, i: number) => (
+                  <div key={l.id} className="flex items-center gap-4 px-5 py-3">
+                    <span className={[
+                      'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0',
+                      i === 0 ? 'bg-[#FCD34D] text-[#92400E]' :
+                      i === 1 ? 'bg-[#D1D5DB] text-[#374151]' :
+                      i === 2 ? 'bg-[#FBBF24] text-[#78350F]' :
+                               'bg-[#F5F5F7] text-[#86868B]',
+                    ].join(' ')}>
+                      {i + 1}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#1D1D1F] truncate">
+                        {l.profile?.full_name ?? '—'}
+                      </p>
+                      <p className="text-xs text-[#86868B]">
+                        OAB/{l.oab_state} {l.oab_number}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <StarRating value={l.avg_rating} size="sm" showValue />
+                      <Badge variant="gray" size="sm">{l.review_count} av.</Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </Card>
         </motion.div>

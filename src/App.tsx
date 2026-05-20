@@ -20,6 +20,10 @@ import { LawyerLayout } from './features/lawyer/LawyerLayout';
 import { LawyerDashboard } from './features/lawyer/LawyerDashboard';
 import { SLAMonitor } from './features/lawyer/SLAMonitor';
 import { LawyerFinanceiro } from './features/lawyer/Financeiro';
+import { DocumentosIA } from './features/lawyer/DocumentosIA';
+import { AdminLayout } from './features/admin/AdminLayout';
+import { AdminOverview } from './features/admin/AdminOverview';
+import { AfiliadosPage } from './features/portal/Afiliados';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,7 +51,12 @@ function App() {
                 <Route path="dashboard"  element={<LawyerDashboard />} />
                 <Route path="sla"        element={<SLAMonitor />} />
                 <Route path="financeiro" element={<LawyerFinanceiro />} />
+                <Route path="documentos" element={<DocumentosIA />} />
               </Route>
+              <Route path="/admin" element={<AdminLayout />}>
+                <Route path="overview"   element={<AdminOverview />} />
+              </Route>
+              <Route path="/portal/afiliados" element={<AfiliadosPage />} />
 
               {/* Legacy Orion CRM routes */}
               <Route path="/" element={<Layout />}>

@@ -1,8 +1,82 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;1,9..144,300&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 @import './styles/tokens.css';
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── JurisFlow Design System ─── */
+:root {
+  /* Backgrounds */
+  --bg-base: #FFFFFF;
+  --bg-subtle: #F5F5F7;
+  --bg-muted: #FAFAFA;
+  --bg-inverse: #1D1D1F;
+
+  /* Blue palette */
+  --blue-50: #EFF6FF;
+  --blue-100: #DBEAFE;
+  --blue-200: #BFDBFE;
+  --blue-500: #3B82F6;
+  --blue-600: #2563EB;
+  --blue-700: #1D4ED8;
+
+  /* Text */
+  --text-primary: #1D1D1F;
+  --text-secondary: #6E6E73;
+  --text-tertiary: #86868B;
+  --text-inverse: #FFFFFF;
+
+  /* Borders */
+  --border-subtle: #E5E5EA;
+  --border-medium: #D1D1D6;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+
+  /* Radii */
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Semantic */
+  --success: #34C759;
+  --warning: #FF9F0A;
+  --danger: #FF3B30;
+  --info: #2563EB;
+
+  /* Legacy Orion tokens (kept for backward compat) */
+  --primary: #2563EB;
+  --primary-container: #DBEAFE;
+  --on-primary: #ffffff;
+  --background: #ffffff;
+  --surface: #ffffff;
+  --surface-lowest: #F5F5F7;
+  --surface-low: #FAFAFA;
+  --surface-high: #E5E5EA;
+  --surface-highest: #D1D1D6;
+  --surface-bright: #ffffff;
+  --on-background: #1D1D1F;
+  --on-surface: #1D1D1F;
+  --on-surface-variant: #6E6E73;
+  --outline: #E5E5EA;
+  --outline-variant: #D1D1D6;
+  --shadow-ambient: var(--shadow-sm);
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --spacing-1: 0.25rem;
+  --spacing-2: 0.5rem;
+  --spacing-3: 0.75rem;
+  --spacing-4: 1rem;
+  --spacing-6: 1.5rem;
+  --spacing-8: 2rem;
+  --spacing-12: 3rem;
+  --spacing-16: 4rem;
+}
 
 * {
   box-sizing: border-box;
@@ -11,18 +85,12 @@
 }
 
 body {
-  font-family: var(--font-body);
-  background-color: var(--background);
-  color: var(--on-background);
+  font-family: 'Inter', system-ui, sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.02em;
 }
 
 button {
@@ -42,69 +110,69 @@ input, textarea, select {
   font-size: 1rem;
 }
 
-/* Scrollbar Style */
+/* ─── Scrollbar ─── */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
-
 ::-webkit-scrollbar-track {
-  background: var(--surface-lowest);
+  background: var(--bg-subtle);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: var(--surface-high);
+  background: var(--border-medium);
   border-radius: var(--radius-full);
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-container);
+  background: var(--text-tertiary);
 }
 
-/* Layout Utilities */
-.app-container {
-  display: flex;
-  min-height: 100vh;
-  background-color: var(--background);
+/* ─── SLA pulse animation (for overdue consultations) ─── */
+@keyframes sla-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.sla-pulse {
+  animation: sla-pulse 1.5s ease-in-out infinite;
 }
 
-.main-content {
-  flex: 1;
-  padding: var(--spacing-8);
-  overflow-y: auto;
+/* ─── Fade-up entry ─── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fadeUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* The Emerald Light Aesthetic - Tonal Layering */
+/* ─── Legal document typography ─── */
+.legal-doc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+/* ─── Legacy Orion compat ─── */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(5, 150, 105, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.1);
 }
-
 .monolith-card {
-  background: var(--surface-bright);
-  border: 1px solid var(--outline);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--spacing-6);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  box-shadow: var(--shadow-ambient);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: var(--shadow-sm);
 }
-
-.monolith-card:hover {
-  border-color: var(--primary);
-  transform: translateY(-2px);
+.app-container {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-base);
 }
-
-.no-border {
-  border: none !important;
-}
-
-/* Animations */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.4s ease forwards;
+.main-content {
+  flex: 1;
+  padding: var(--spacing-8);
+  overflow-y: auto;
 }

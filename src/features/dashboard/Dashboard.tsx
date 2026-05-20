@@ -113,7 +113,7 @@ export const Dashboard: React.FC = () => {
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm">Mensal</Button>
-                <Button variant="glass" size="sm">Trimestral</Button>
+                <Button variant="ghost" size="sm">Trimestral</Button>
               </div>
             </div>
             
@@ -190,7 +190,7 @@ export const Dashboard: React.FC = () => {
               ))}
             </div>
 
-            <Button variant="glass" className="w-full mt-8">Ver Histórico Completo</Button>
+            <Button variant="ghost" className="w-full mt-8">Ver Histórico Completo</Button>
           </Card>
 
           <Card className="bg-[var(--tertiary)] border-none">

@@ -6,6 +6,7 @@ import { Button } from '../../components/ui/Button'
 import { variants } from '../../lib/motion'
 import { useConsultations, useSendMessage } from '../../hooks/useConsultations'
 import { getSLAStatus, getRemainingText, getSLAColorClass } from '../../lib/sla'
+import { supabase } from '../../lib/supabase'
 import type { Consultation } from '../../lib/database.types'
 
 const AREA_LABELS: Record<string, string> = {
@@ -32,15 +33,23 @@ const ResponsePanel: React.FC<{ consultation: Consultation; onClose: () => void 
 
   const handleAI = async () => {
     setAiLoading(true)
-    await new Promise((r) => setTimeout(r, 900))
-    setSuggestion(
-      `Prezado(a),\n\nEm resposta à sua consulta sobre "${consultation.title}", informo:\n\n` +
-      `1. A situação deve ser analisada à luz da legislação vigente aplicável.\n` +
-      `2. Recomendo verificar os documentos e contratos relacionados ao caso.\n` +
-      `3. Será necessário análise dos fatos específicos para uma orientação mais precisa.\n\n` +
-      `Permaneço à disposição para esclarecimentos adicionais.`
-    )
-    setAiLoading(false)
+    setSuggestion('')
+    try {
+      const { data, error } = await supabase.functions.invoke('legal-ai', {
+        body: {
+          type:                        'suggestion',
+          consultation_title:          consultation.title,
+          consultation_description:    consultation.description,
+          legal_area:                  consultation.legal_area,
+        },
+      })
+      if (error) throw error
+      setSuggestion(data?.content ?? 'Sem sugestão retornada.')
+    } catch (e: any) {
+      setSuggestion(`Erro ao gerar sugestão: ${e?.message ?? 'tente novamente'}`)
+    } finally {
+      setAiLoading(false)
+    }
   }
 
   const handleSend = async () => {

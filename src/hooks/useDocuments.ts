@@ -2,17 +2,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Document, DocumentType } from '../lib/database.types'
-import { SYSTEM_PROMPT } from '../lib/ai/documentGenerator'
-
-const DOC_TYPE_NAMES: Record<DocumentType, string> = {
-  contrato:    'Contrato',
-  nda:         'NDA',
-  notificacao: 'Notificação',
-  politica:    'Política de Privacidade',
-  procuracao:  'Procuração',
-  distrato:    'Distrato',
-  outros:      'Documento Jurídico',
-}
 
 export function useDocuments() {
   const { company, lawyer, profile } = useAuth()
@@ -70,8 +59,7 @@ export function useRequestDocument() {
 
       if (insertErr) throw insertErr
 
-      // 2. Call AI generation (Supabase Edge Function in production)
-      // For now, generate mock draft and save it
+      // 2. Call AI generation via Supabase Edge Function
       const draft = await generateDraftContent(params)
 
       const { error: updateErr } = await supabase
@@ -114,51 +102,19 @@ export function useApproveDocument() {
 }
 
 async function generateDraftContent(params: RequestDocumentParams): Promise<string> {
-  const docName = DOC_TYPE_NAMES[params.docType] ?? params.docType
-  const today = new Date().toLocaleDateString('pt-BR')
+  const { data, error } = await supabase.functions.invoke('legal-ai', {
+    body: {
+      type:     'document',
+      doc_type: params.docType,
+      context:  `${params.title}\n\n${params.context}`,
+    },
+  })
 
-  return `${docName.toUpperCase()}
+  if (error || !data?.content) {
+    // Fallback estruturado quando a IA não está disponível
+    const today = new Date().toLocaleDateString('pt-BR')
+    return `RASCUNHO — ${params.title.toUpperCase()}\n\nGerado em: ${today}\n\n[PREENCHER: Conteúdo do documento]\n\nContexto fornecido:\n${params.context}\n\n---\nDocumento gerado com IA — revisão obrigatória pelo advogado OAB.`
+  }
 
-Gerado em: ${today}
-Contexto: ${params.context}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-CLÁUSULA 1 — DAS PARTES
-
-1.1. [PREENCHER: Parte A — Razão Social, CNPJ, Endereço]
-
-1.2. [PREENCHER: Parte B — Razão Social, CNPJ, Endereço]
-
-CLÁUSULA 2 — DO OBJETO
-
-2.1. [PREENCHER: Descrição detalhada do objeto]
-
-CLÁUSULA 3 — DO PRAZO
-
-3.1. Vigência: [PREENCHER: período]
-
-CLÁUSULA 4 — DO VALOR
-
-4.1. R$ [PREENCHER: valor] — [PREENCHER: forma de pagamento]
-
-CLÁUSULA 5 — DAS OBRIGAÇÕES
-
-5.1. Parte A: [PREENCHER]
-5.2. Parte B: [PREENCHER]
-
-CLÁUSULA 6 — DO FORO
-
-6.1. Comarca de [PREENCHER: cidade/estado]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-[Local e Data]
-
-_______________________    _______________________
-Parte A                    Parte B
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Documento gerado com IA — revisão obrigatória pelo advogado OAB antes de qualquer efeito jurídico.
-${SYSTEM_PROMPT.split('\n')[0]}`
+  return `${data.content}\n\n---\nRascunho gerado com IA — revisão obrigatória pelo advogado OAB antes de qualquer efeito jurídico.`
 }

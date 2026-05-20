@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Badge, StatusBadge } from '../../components/ui/Badge'
@@ -203,6 +204,7 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
 export const Consultas: React.FC = () => {
   const [activeTab,     setActiveTab]     = useState<TabKey>('all')
   const [slideOverOpen, setSlideOverOpen] = useState(false)
+  const navigate = useNavigate()
 
   const { data: consultations, isLoading } = useConsultations()
 
@@ -262,7 +264,7 @@ export const Consultas: React.FC = () => {
 
             return (
               <motion.div key={c.id} variants={variants.cardEnter}>
-                <Card variant="default" padding="md" clickable className="cursor-pointer">
+                <Card variant="default" padding="md" clickable className="cursor-pointer" onClick={() => navigate(`/portal/consultas/${c.id}`)}>
                   <div className="flex items-center gap-4">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[#1D1D1F] mb-1.5">{c.title}</p>

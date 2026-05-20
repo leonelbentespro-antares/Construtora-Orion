@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
+import { useNavigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { useAuth } from '../../context/AuthContext'
 
 const schema = z.object({
   email:    z.string().email('E-mail inválido'),
@@ -22,7 +24,10 @@ const GoogleIcon = () => (
 )
 
 export const LoginPage: React.FC = () => {
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading]   = useState(false)
+  const [apiError, setApiError] = useState('')
+  const { signIn, profile }     = useAuth()
+  const navigate                = useNavigate()
 
   const {
     register,
@@ -30,10 +35,22 @@ export const LoginPage: React.FC = () => {
     formState: { errors },
   } = useForm<FormData>()
 
-  const onSubmit = async (_data: FormData) => {
+  const onSubmit = async (data: FormData) => {
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1200))
+    setApiError('')
+    const { error } = await signIn(data.email, data.password)
     setLoading(false)
+
+    if (error) {
+      setApiError('E-mail ou senha incorretos.')
+      return
+    }
+
+    // Redirect based on role
+    const role = profile?.role
+    if (role === 'lawyer') navigate('/advogado/dashboard')
+    else if (role === 'admin') navigate('/admin/overview')
+    else navigate('/portal/dashboard')
   }
 
   return (
@@ -53,6 +70,12 @@ export const LoginPage: React.FC = () => {
           error={errors.password?.message}
           {...register('password')}
         />
+
+        {apiError && (
+          <p className="text-sm text-[#FF3B30] bg-[#FFF1F2] px-3 py-2 rounded-[8px]">
+            {apiError}
+          </p>
+        )}
 
         <div className="flex justify-end">
           <button

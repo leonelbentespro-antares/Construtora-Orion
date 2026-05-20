@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
+import { useNavigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
@@ -8,6 +9,7 @@ import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { useMultiStep } from './useMultiStep'
 import { variants, spring } from '../../lib/motion'
+import { useAuth } from '../../context/AuthContext'
 
 type Role = 'client' | 'lawyer' | null
 
@@ -126,6 +128,7 @@ interface ClientData {
 }
 
 const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const { signUp } = useAuth()
   const { currentStep, goNext, goPrev, isFirst, isLast } = useMultiStep({
     totalSteps: 4,
     storageKey: 'jurisflow:client-signup',
@@ -137,6 +140,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   })
 
   const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
 
   const slideVariant = {
     enter: (dir: number) => ({ opacity: 0, x: dir > 0 ? 20 : -20 }),
@@ -158,9 +162,23 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   }
 
   const handleSubmit = async () => {
+    if (!data.email || !data.password) {
+      setApiError('Preencha e-mail e senha.')
+      return
+    }
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1500))
+    setApiError('')
+    const { error } = await signUp({
+      email:    data.email,
+      password: data.password,
+      fullName: data.companyName || data.email,
+      role:     'client',
+    })
     setLoading(false)
+    if (error) {
+      setApiError(error)
+      return
+    }
     onComplete()
   }
 
@@ -301,7 +319,11 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex items-center justify-between mt-8">
+      {apiError && (
+        <p className="mt-4 text-sm text-[#FF3B30] bg-[#FFF1F2] px-3 py-2 rounded-[8px]">{apiError}</p>
+      )}
+
+      <div className="flex items-center justify-between mt-4">
         {!isFirst ? (
           <Button variant="ghost" size="md" onClick={prev}>← Voltar</Button>
         ) : (
@@ -334,6 +356,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 // ─── Lawyer Steps (simplified for this stage) ─────────────────────────────────
 
 const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const { signUp } = useAuth()
   const { currentStep, goNext, goPrev, isLast } = useMultiStep({
     totalSteps: 5,
     storageKey: 'jurisflow:lawyer-signup',
@@ -341,8 +364,13 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 
   const [dir, setDir] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState('')
   const next = () => { setDir(1); goNext() }
   const prev = () => { setDir(-1); goPrev() }
+
+  const [email, setEmail]       = useState('')
+  const [password, setPassword] = useState('')
+  const [fullName, setFullName] = useState('')
 
   const [areas, setAreas] = useState<string[]>([])
   const toggleArea = (a: string) =>
@@ -357,9 +385,18 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   ]
 
   const handleSubmit = async () => {
+    if (!email || !password || !fullName) {
+      setApiError('Preencha nome, e-mail e senha.')
+      return
+    }
     setLoading(true)
-    await new Promise((r) => setTimeout(r, 1500))
+    setApiError('')
+    const { error } = await signUp({ email, password, fullName, role: 'lawyer' })
     setLoading(false)
+    if (error) {
+      setApiError(error)
+      return
+    }
     onComplete()
   }
 
@@ -387,7 +424,29 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 
           {currentStep === 0 && (
             <div className="space-y-3">
-              <Input label="Nome completo" placeholder="Dr. João Silva" required />
+              <Input
+                label="Nome completo"
+                placeholder="Dr. João Silva"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                required
+              />
+              <Input
+                label="E-mail"
+                type="email"
+                placeholder="dr.joao@oab.com.br"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              <Input
+                label="Senha"
+                type="password"
+                placeholder="Mínimo 8 caracteres"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
               <Input label="CPF" placeholder="000.000.000-00" required />
               <Input label="Telefone" type="tel" placeholder="(11) 99999-9999" required />
             </div>
@@ -478,7 +537,11 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex items-center justify-between mt-8">
+      {apiError && (
+        <p className="mt-4 text-sm text-[#FF3B30] bg-[#FFF1F2] px-3 py-2 rounded-[8px]">{apiError}</p>
+      )}
+
+      <div className="flex items-center justify-between mt-4">
         {currentStep > 0 ? (
           <Button variant="ghost" size="md" onClick={prev}>← Voltar</Button>
         ) : (
@@ -500,36 +563,44 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 
 // ─── Success State ────────────────────────────────────────────────────────────
 
-const SuccessState: React.FC<{ role: Role }> = ({ role }) => (
-  <motion.div
-    initial={{ opacity: 0, scale: 0.96 }}
-    animate={{ opacity: 1, scale: 1 }}
-    transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-    className="text-center space-y-4"
-  >
+const SuccessState: React.FC<{ role: Role }> = ({ role }) => {
+  const navigate = useNavigate()
+  return (
     <motion.div
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 20 }}
-      className="w-16 h-16 rounded-full bg-[#F0FDF4] border-2 border-[#34C759] flex items-center justify-center text-2xl mx-auto"
+      initial={{ opacity: 0, scale: 0.96 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="text-center space-y-4"
     >
-      ✓
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 20 }}
+        className="w-16 h-16 rounded-full bg-[#F0FDF4] border-2 border-[#34C759] flex items-center justify-center text-2xl mx-auto"
+      >
+        ✓
+      </motion.div>
+      <h2 className="text-xl font-semibold text-[#1D1D1F]">
+        {role === 'lawyer' ? 'Perfil enviado!' : 'Conta criada com sucesso!'}
+      </h2>
+      <p className="text-sm text-[#6E6E73] max-w-xs mx-auto leading-relaxed">
+        {role === 'lawyer'
+          ? 'Analisamos em até 48 horas úteis. Você receberá um e-mail quando aprovado.'
+          : 'Confirme seu e-mail e acesse seu portal jurídico.'}
+      </p>
+      {role === 'client' && (
+        <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/login')}>
+          Ir para o login →
+        </Button>
+      )}
+      {role === 'lawyer' && (
+        <Button variant="outline" size="lg" fullWidth onClick={() => navigate('/login')}>
+          Ir para o login
+        </Button>
+      )}
     </motion.div>
-    <h2 className="text-xl font-semibold text-[#1D1D1F]">
-      {role === 'lawyer' ? 'Perfil enviado!' : 'Conta criada com sucesso!'}
-    </h2>
-    <p className="text-sm text-[#6E6E73] max-w-xs mx-auto leading-relaxed">
-      {role === 'lawyer'
-        ? 'Analisamos em até 48 horas úteis. Você receberá um e-mail quando aprovado.'
-        : 'Configurando seu portal jurídico...'}
-    </p>
-    {role === 'client' && (
-      <Button variant="primary" size="lg" fullWidth>
-        Acessar meu portal →
-      </Button>
-    )}
-  </motion.div>
-)
+  )
+}
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 

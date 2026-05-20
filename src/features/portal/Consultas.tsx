@@ -5,39 +5,71 @@ import { Card } from '../../components/ui/Card'
 import { Badge, StatusBadge } from '../../components/ui/Badge'
 import { Textarea } from '../../components/ui/Input'
 import { variants } from '../../lib/motion'
+import { useConsultations, useOpenConsultation } from '../../hooks/useConsultations'
+import { useAuth } from '../../context/AuthContext'
+import { getSLAStatus, getRemainingText } from '../../lib/sla'
+import type { ConsultationStatus, LegalArea } from '../../lib/database.types'
 
-const LEGAL_AREAS = [
-  'Trabalhista', 'Tributário', 'Contratos', 'Societário',
-  'Imobiliário', 'Consumidor', 'Ambiental', 'LGPD',
+const LEGAL_AREAS: LegalArea[] = [
+  'trabalhista', 'tributario', 'contratos', 'societario',
+  'imobiliario', 'consumidor', 'ambiental', 'lgpd',
 ]
 
-const allConsultations = [
-  { id:'1', topic:'Rescisão de contrato com fornecedor', area:'Contratos', status:'em_andamento', lawyer:'Dr. Marcos Ribeiro', openedAt:'há 1h',   sla:'3h restantes',   slaUrgent: true  },
-  { id:'2', topic:'Reajuste de aluguel comercial',      area:'Imobiliário', status:'aguardando', lawyer:'Dra. Carla Santos', openedAt:'há 30min',  sla:'7h 30min',       slaUrgent: false },
-  { id:'3', topic:'Demissão de funcionário CLT',        area:'Trabalhista', status:'concluida',  lawyer:'Dr. Marcos Ribeiro', openedAt:'há 5 dias', sla:'Concluída',      slaUrgent: false },
-  { id:'4', topic:'Revisão de contrato social',         area:'Societário',  status:'arquivada',  lawyer:'Dra. Carla Santos', openedAt:'há 2 sem',  sla:'Arquivada',      slaUrgent: false },
-]
+const AREA_LABELS: Record<LegalArea, string> = {
+  trabalhista: 'Trabalhista',
+  tributario:  'Tributário',
+  contratos:   'Contratos',
+  societario:  'Societário',
+  imobiliario: 'Imobiliário',
+  consumidor:  'Consumidor',
+  ambiental:   'Ambiental',
+  lgpd:        'LGPD',
+}
 
-type TabKey = 'all' | 'em_andamento' | 'aguardando' | 'concluida' | 'arquivada'
+type TabKey = 'all' | ConsultationStatus
 
 const tabs: { key: TabKey; label: string }[] = [
-  { key: 'all',          label: 'Todas'       },
-  { key: 'aguardando',   label: 'Aguardando'  },
-  { key: 'em_andamento', label: 'Em andamento'},
-  { key: 'concluida',    label: 'Concluídas'  },
-  { key: 'arquivada',    label: 'Arquivadas'  },
+  { key: 'all',          label: 'Todas'        },
+  { key: 'aguardando',   label: 'Aguardando'   },
+  { key: 'em_andamento', label: 'Em andamento' },
+  { key: 'concluida',    label: 'Concluídas'   },
+  { key: 'arquivada',    label: 'Arquivadas'   },
 ]
 
 // ─── New Consultation Slide-over ──────────────────────────────────────────────
 
 const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
-  const [step, setStep] = useState(0)
-  const [area, setArea] = useState('')
-  const [description, setDescription] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const { company, profile }    = useAuth()
+  const openConsultation        = useOpenConsultation()
 
-  const handleSubmit = () => {
-    setSubmitted(true)
+  const [area,        setArea]        = useState<LegalArea | ''>('')
+  const [title,       setTitle]       = useState('')
+  const [description, setDescription] = useState('')
+  const [submitted,   setSubmitted]   = useState(false)
+  const [error,       setError]       = useState('')
+
+  const subscriptionId = (profile as any)?.subscription_id ?? ''
+
+  const handleSubmit = async () => {
+    if (!company?.id) {
+      setError('Empresa não encontrada.')
+      return
+    }
+    if (!area || !title || description.length < 20) return
+    setError('')
+    try {
+      await openConsultation.mutateAsync({
+        companyId:      company.id,
+        subscriptionId: subscriptionId,
+        legalArea:      area as LegalArea,
+        title,
+        description,
+        planKey:        'profissional',
+      })
+      setSubmitted(true)
+    } catch (e: any) {
+      setError(e?.message ?? 'Erro ao enviar consulta.')
+    }
   }
 
   return (
@@ -58,7 +90,6 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
             transition={{ type: 'spring', stiffness: 400, damping: 40 }}
             className="fixed right-0 top-0 bottom-0 w-[480px] bg-white z-50 flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.15)]"
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E5EA]">
               <h2 className="text-lg font-semibold text-[#1D1D1F]">Nova consulta</h2>
               <button
@@ -69,7 +100,6 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
               </button>
             </div>
 
-            {/* Content */}
             <div className="flex-1 overflow-y-auto p-6">
               {submitted ? (
                 <motion.div
@@ -82,18 +112,28 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                   </div>
                   <h3 className="font-semibold text-[#1D1D1F]">Consulta enviada!</h3>
                   <p className="text-sm text-[#6E6E73]">
-                    Seu advogado responderá até{' '}
-                    <strong className="text-[#1D1D1F]">
-                      {new Date(Date.now() + 4 * 3600000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </strong>
+                    Seu advogado responderá em breve conforme o SLA do seu plano.
                   </p>
+                  <Button variant="primary" size="md" onClick={onClose}>Fechar</Button>
                 </motion.div>
               ) : (
                 <div className="space-y-6">
-                  {/* Step 1 — area */}
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     <p className="text-sm font-medium text-[#1D1D1F]">
                       <span className="inline-flex w-5 h-5 rounded-full bg-[#2563EB] text-white text-xs items-center justify-center mr-2">1</span>
+                      Título da consulta
+                    </p>
+                    <input
+                      className="w-full h-10 rounded-[10px] border border-[#D1D1D6] px-3 text-sm text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                      placeholder="Ex: Rescisão de contrato com fornecedor"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium text-[#1D1D1F]">
+                      <span className="inline-flex w-5 h-5 rounded-full bg-[#2563EB] text-white text-xs items-center justify-center mr-2">2</span>
                       Área jurídica
                     </p>
                     <div className="flex flex-wrap gap-2">
@@ -109,16 +149,15 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                               : 'bg-white text-[#1D1D1F] border-[#D1D1D6] hover:border-[#86868B]',
                           ].join(' ')}
                         >
-                          {a}
+                          {AREA_LABELS[a]}
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Step 2 — description */}
                   <div>
                     <p className="text-sm font-medium text-[#1D1D1F] mb-2">
-                      <span className="inline-flex w-5 h-5 rounded-full bg-[#2563EB] text-white text-xs items-center justify-center mr-2">2</span>
+                      <span className="inline-flex w-5 h-5 rounded-full bg-[#2563EB] text-white text-xs items-center justify-center mr-2">3</span>
                       Descreva sua situação
                     </p>
                     <Textarea
@@ -131,28 +170,21 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                     />
                   </div>
 
-                  {/* Step 3 — attachments */}
-                  <div>
-                    <p className="text-sm font-medium text-[#1D1D1F] mb-2">
-                      <span className="inline-flex w-5 h-5 rounded-full bg-[#E5E5EA] text-[#6E6E73] text-xs items-center justify-center mr-2">3</span>
-                      Anexar documentos (opcional)
-                    </p>
-                    <div className="border-2 border-dashed border-[#D1D1D6] rounded-[10px] p-6 text-center text-sm text-[#86868B] hover:border-[#2563EB] transition-colors cursor-pointer">
-                      Arraste arquivos ou clique para selecionar · PDF, JPG, PNG (max 10MB)
-                    </div>
-                  </div>
+                  {error && (
+                    <p className="text-sm text-[#FF3B30] bg-[#FFF1F2] px-3 py-2 rounded-[8px]">{error}</p>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Footer */}
             {!submitted && (
               <div className="border-t border-[#E5E5EA] p-6">
                 <Button
                   variant="primary"
                   size="lg"
                   fullWidth
-                  disabled={!area || description.length < 20}
+                  disabled={!area || !title || description.length < 20}
+                  loading={openConsultation.isPending}
                   onClick={handleSubmit}
                 >
                   Enviar consulta
@@ -169,12 +201,16 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
 // ─── Consultations List ────────────────────────────────────────────────────────
 
 export const Consultas: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<TabKey>('all')
+  const [activeTab,     setActiveTab]     = useState<TabKey>('all')
   const [slideOverOpen, setSlideOverOpen] = useState(false)
 
-  const filtered = activeTab === 'all'
-    ? allConsultations
-    : allConsultations.filter((c) => c.status === activeTab)
+  const { data: consultations, isLoading } = useConsultations()
+
+  const filtered = !consultations
+    ? []
+    : activeTab === 'all'
+    ? consultations
+    : consultations.filter((c) => c.status === activeTab)
 
   return (
     <motion.div
@@ -209,50 +245,63 @@ export const Consultas: React.FC = () => {
       </motion.div>
 
       {/* List */}
-      <motion.div variants={variants.stagger} className="space-y-3">
-        {filtered.map((c) => (
-          <motion.div key={c.id} variants={variants.cardEnter}>
-            <Card
-              variant="default"
-              padding="md"
-              clickable
-              className="cursor-pointer"
-            >
-              <div className="flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1D1D1F] mb-1.5">{c.topic}</p>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="gray" size="sm">{c.area}</Badge>
-                    <StatusBadge status={c.status} />
-                    <span className="text-xs text-[#86868B]">{c.openedAt}</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right hidden sm:block">
-                    <p className="text-xs font-medium text-[#1D1D1F]">{c.lawyer}</p>
-                    <p
-                      className={[
-                        'text-xs',
-                        c.slaUrgent ? 'text-[#D97706] font-medium' : 'text-[#6E6E73]',
-                      ].join(' ')}
-                    >
-                      {c.sla}
-                    </p>
-                  </div>
-                  <span className="text-[#86868B]">→</span>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        ))}
+      {isLoading ? (
+        <div className="flex justify-center py-16">
+          <div className="w-7 h-7 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : (
+        <motion.div variants={variants.stagger} className="space-y-3">
+          {filtered.map((c) => {
+            const deadline   = new Date(c.sla_deadline)
+            const slaStatus  = getSLAStatus(deadline)
+            const remaining  = getRemainingText(deadline)
+            const lawyerName = (c as any).lawyer?.profile?.full_name ?? null
+            const openedAt   = new Date(c.created_at).toLocaleString('pt-BR', {
+              day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+            })
 
-        {filtered.length === 0 && (
-          <div className="text-center py-16 text-[#86868B]">
-            <p className="text-3xl mb-3">📭</p>
-            <p className="text-sm">Nenhuma consulta nesta categoria</p>
-          </div>
-        )}
-      </motion.div>
+            return (
+              <motion.div key={c.id} variants={variants.cardEnter}>
+                <Card variant="default" padding="md" clickable className="cursor-pointer">
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-[#1D1D1F] mb-1.5">{c.title}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="gray" size="sm">{AREA_LABELS[c.legal_area] ?? c.legal_area}</Badge>
+                        <StatusBadge status={c.status} />
+                        <span className="text-xs text-[#86868B]">{openedAt}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <div className="text-right hidden sm:block">
+                        {lawyerName && (
+                          <p className="text-xs font-medium text-[#1D1D1F]">{lawyerName}</p>
+                        )}
+                        <p className={[
+                          'text-xs',
+                          slaStatus === 'critical' || slaStatus === 'warning'
+                            ? 'text-[#D97706] font-medium'
+                            : 'text-[#6E6E73]',
+                        ].join(' ')}>
+                          {remaining}
+                        </p>
+                      </div>
+                      <span className="text-[#86868B]">→</span>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            )
+          })}
+
+          {filtered.length === 0 && (
+            <div className="text-center py-16 text-[#86868B]">
+              <p className="text-3xl mb-3">📭</p>
+              <p className="text-sm">Nenhuma consulta nesta categoria</p>
+            </div>
+          )}
+        </motion.div>
+      )}
 
       <NewConsultationSlideOver open={slideOverOpen} onClose={() => setSlideOverOpen(false)} />
     </motion.div>

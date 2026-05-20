@@ -2,7 +2,17 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { Document, DocumentType } from '../lib/database.types'
-import { DOCUMENT_TEMPLATES, SYSTEM_PROMPT } from '../lib/ai/documentGenerator'
+import { SYSTEM_PROMPT } from '../lib/ai/documentGenerator'
+
+const DOC_TYPE_NAMES: Record<DocumentType, string> = {
+  contrato:    'Contrato',
+  nda:         'NDA',
+  notificacao: 'Notificação',
+  politica:    'Política de Privacidade',
+  procuracao:  'Procuração',
+  distrato:    'Distrato',
+  outros:      'Documento Jurídico',
+}
 
 export function useDocuments() {
   const { company, lawyer, profile } = useAuth()
@@ -52,7 +62,7 @@ export function useRequestDocument() {
           doc_type:        params.docType,
           title:           params.title,
           status:          'ai_draft',
-          ai_model:        DOCUMENT_TEMPLATES[params.docType].claudeModel,
+          ai_model:        'claude-opus-4-7',
           generated_at:    new Date().toISOString(),
         })
         .select()
@@ -104,10 +114,10 @@ export function useApproveDocument() {
 }
 
 async function generateDraftContent(params: RequestDocumentParams): Promise<string> {
-  const template = DOCUMENT_TEMPLATES[params.docType]
+  const docName = DOC_TYPE_NAMES[params.docType] ?? params.docType
   const today = new Date().toLocaleDateString('pt-BR')
 
-  return `${template.name.toUpperCase()}
+  return `${docName.toUpperCase()}
 
 Gerado em: ${today}
 Contexto: ${params.context}

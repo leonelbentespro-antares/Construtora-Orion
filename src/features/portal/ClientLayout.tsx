@@ -86,7 +86,7 @@ export const ClientLayout: React.FC = () => {
             <div className="bg-[#EFF6FF] rounded-[10px] p-3">
               <p className="text-xs font-medium text-[#1D4ED8] mb-2">Atualize seu plano</p>
               <p className="text-xs text-[#6E6E73] mb-2">SLA 4h, consultas ilimitadas, suporte prioritário</p>
-              <Button variant="primary" size="sm" fullWidth>Fazer upgrade →</Button>
+              <Button variant="primary" size="sm" fullWidth onClick={() => navigate('/portal/financeiro')}>Fazer upgrade →</Button>
             </div>
           </div>
         )}

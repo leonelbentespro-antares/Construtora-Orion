@@ -33,6 +33,14 @@ import { AdminLayout } from './features/admin/AdminLayout'
 import { AdminOverview } from './features/admin/AdminOverview'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
+const AdminComingSoon: React.FC<{ title: string }> = ({ title }) => (
+  <div className="text-center py-24">
+    <p className="text-3xl mb-4">🚧</p>
+    <h1 className="text-2xl font-semibold text-[#1D1D1F] mb-2">{title}</h1>
+    <p className="text-[#86868B] text-sm">Esta seção está em desenvolvimento.</p>
+  </div>
+)
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: { staleTime: 5 * 60 * 1000, retry: 1 },
@@ -85,6 +93,12 @@ function AppRoutes() {
       <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
         <Route index                     element={<Navigate to="overview" replace />} />
         <Route path="overview"           element={<AdminOverview />} />
+        <Route path="plataforma"         element={<AdminComingSoon title="Plataforma" />} />
+        <Route path="advogados"          element={<AdminComingSoon title="Advogados" />} />
+        <Route path="clientes"           element={<AdminComingSoon title="Clientes" />} />
+        <Route path="financeiro"         element={<AdminComingSoon title="Financeiro" />} />
+        <Route path="afiliados"          element={<AdminComingSoon title="Afiliados" />} />
+        <Route path="logs"               element={<AdminComingSoon title="Logs" />} />
       </Route>
 
       {/* Legacy Orion CRM */}

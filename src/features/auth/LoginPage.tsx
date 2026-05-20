@@ -6,6 +6,7 @@ import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../lib/supabase'
 
 const schema = z.object({
   email:    z.string().email('E-mail inválido'),
@@ -24,21 +25,26 @@ const GoogleIcon = () => (
 )
 
 export const LoginPage: React.FC = () => {
-  const [loading, setLoading]   = useState(false)
-  const [apiError, setApiError] = useState('')
-  const { signIn, profile }     = useAuth()
-  const navigate                = useNavigate()
+  const [loading,     setLoading]     = useState(false)
+  const [resetLoading,setResetLoading]= useState(false)
+  const [apiError,    setApiError]    = useState('')
+  const [resetEmail,  setResetEmail]  = useState('')
+  const [showReset,   setShowReset]   = useState(false)
+  const [resetSent,   setResetSent]   = useState(false)
+  const { signIn }                    = useAuth()
+  const navigate                      = useNavigate()
 
   const {
     register,
     handleSubmit,
     formState: { errors },
+    getValues,
   } = useForm<FormData>()
 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     setApiError('')
-    const { error } = await signIn(data.email, data.password)
+    const { error, role } = await signIn(data.email, data.password)
     setLoading(false)
 
     if (error) {
@@ -46,11 +52,53 @@ export const LoginPage: React.FC = () => {
       return
     }
 
-    // Redirect based on role
-    const role = profile?.role
     if (role === 'lawyer') navigate('/advogado/dashboard')
     else if (role === 'admin') navigate('/admin/overview')
     else navigate('/portal/dashboard')
+  }
+
+  const handleReset = async () => {
+    if (!resetEmail) return
+    setResetLoading(true)
+    await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/login`,
+    })
+    setResetLoading(false)
+    setResetSent(true)
+  }
+
+  if (showReset) {
+    return (
+      <AuthLayout title="Redefinir senha">
+        {resetSent ? (
+          <div className="text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-[#F0FDF4] flex items-center justify-center text-xl mx-auto">✓</div>
+            <p className="text-sm text-[#6E6E73]">
+              Se o e-mail estiver cadastrado, você receberá o link de redefinição em breve.
+            </p>
+            <Button variant="primary" size="md" fullWidth onClick={() => { setShowReset(false); setResetSent(false) }}>
+              Voltar ao login
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <Input
+              label="E-mail cadastrado"
+              type="email"
+              placeholder="voce@empresa.com.br"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+            />
+            <Button variant="primary" size="lg" fullWidth loading={resetLoading} onClick={handleReset}>
+              Enviar link de redefinição
+            </Button>
+            <Button variant="ghost" size="md" fullWidth onClick={() => setShowReset(false)}>
+              ← Voltar
+            </Button>
+          </div>
+        )}
+      </AuthLayout>
+    )
   }
 
   return (
@@ -80,6 +128,7 @@ export const LoginPage: React.FC = () => {
         <div className="flex justify-end">
           <button
             type="button"
+            onClick={() => { setResetEmail(getValues('email') ?? ''); setShowReset(true) }}
             className="text-sm text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
           >
             Esqueci minha senha
@@ -102,6 +151,9 @@ export const LoginPage: React.FC = () => {
           fullWidth
           leftIcon={<GoogleIcon />}
           type="button"
+          onClick={async () => {
+            await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/portal/dashboard` } })
+          }}
         >
           Google
         </Button>

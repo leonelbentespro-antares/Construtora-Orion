@@ -10,7 +10,7 @@ interface AuthContextValue {
   company:     Company | null
   lawyer:      Lawyer | null
   loading:     boolean
-  signIn:      (email: string, password: string) => Promise<{ error: string | null }>
+  signIn:      (email: string, password: string) => Promise<{ error: string | null; role: string | null }>
   signUp:      (params: SignUpParams) => Promise<{ error: string | null }>
   signOut:     () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -89,8 +89,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) return { error: error.message, role: null as string | null }
+    let role: string | null = null
+    if (data.user) {
+      const { data: prof } = await supabase.schema('jurisflow').from('profiles')
+        .select('role').eq('id', data.user.id).single()
+      role = prof?.role ?? null
+    }
+    return { error: null, role }
   }
 
   const signUp = async ({ email, password, fullName, role }: SignUpParams) => {

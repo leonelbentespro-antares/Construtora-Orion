@@ -1,5 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
@@ -18,6 +19,7 @@ const PLAN_PRICES: Record<string, number> = {
 export const ClientFinanceiro: React.FC = () => {
   const { company }              = useAuth()
   const { data: sub, isLoading } = useClientSubscription()
+  const navigate                 = useNavigate()
 
   const planKey    = sub?.plan?.key  ?? sub?.plan_key ?? null
   const planName   = planKey ? PLAN_NAMES[planKey] ?? planKey : '—'
@@ -105,7 +107,7 @@ export const ClientFinanceiro: React.FC = () => {
                     : 'SLA 2h, advogado dedicado, todos os benefícios'}
                 </p>
               </div>
-              <Button variant="primary" size="sm">Ver planos</Button>
+              <Button variant="primary" size="sm" onClick={() => navigate('/portal/financeiro#planos')}>Ver planos</Button>
             </div>
           </Card>
         </motion.div>

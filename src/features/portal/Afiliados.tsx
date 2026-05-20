@@ -142,7 +142,13 @@ export const AfiliadosPage: React.FC = () => {
             <p className="text-sm text-[#6E6E73]">
               Próximo pagamento: dia 15 de junho · Mínimo R$100
             </p>
-            <Button variant="outline" size="sm">Solicitar antecipação</Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => alert('Solicitação de antecipação enviada! Nossa equipe entrará em contato em até 24h.')}
+            >
+              Solicitar antecipação
+            </Button>
           </div>
         </Card>
       </motion.div>

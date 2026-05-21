@@ -228,24 +228,27 @@ export const ClientDashboard: React.FC = () => {
       </motion.div>
 
       {/* Assigned lawyer */}
-      {data?.assignedLawyer && (
-        <motion.div variants={variants.fadeUp}>
-          <Card variant="elevated" padding="md">
-            <CardHeader>
-              <CardTitle>Seu advogado</CardTitle>
-              <Badge variant="green" dot>Disponível</Badge>
-            </CardHeader>
+      <motion.div variants={variants.fadeUp}>
+        <Card variant="elevated" padding="md">
+          <CardHeader>
+            <CardTitle>Seu advogado</CardTitle>
+            {data?.assignedLawyer
+              ? <Badge variant="green" dot>Disponível</Badge>
+              : <Badge variant="gray">Aguardando designação</Badge>
+            }
+          </CardHeader>
+
+          {data?.assignedLawyer ? (
             <div className="flex items-start gap-4">
-              {/* Avatar */}
+              {/* Avatar + stars */}
               <div className="flex flex-col items-center gap-1.5 shrink-0">
                 <div className="w-14 h-14 rounded-full bg-[#DBEAFE] flex items-center justify-center text-base font-semibold text-[#1D4ED8]">
                   {(data.assignedLawyer as any).profile?.full_name
                     ?.split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase() ?? '?'}
                 </div>
-                {/* Estrelas abaixo da foto */}
                 <StarRating value={lawyerAvg} size="sm" showValue={lawyerReviews.length > 0} />
                 <p className="text-[10px] text-[#86868B]">
-                  {lawyerReviews.length === 0 ? 'Sem avaliações' : `${lawyerReviews.length} avaliação${lawyerReviews.length > 1 ? 'ões' : ''}`}
+                  {lawyerReviews.length === 0 ? 'Sem avaliações' : `${lawyerReviews.length} av.`}
                 </p>
               </div>
 
@@ -274,9 +277,22 @@ export const ClientDashboard: React.FC = () => {
                 </Button>
               </div>
             </div>
-          </Card>
-        </motion.div>
-      )}
+          ) : (
+            <div className="flex items-center gap-4 py-2">
+              <div className="w-14 h-14 rounded-full bg-[#F5F5F7] border-2 border-dashed border-[#D1D1D6] flex items-center justify-center text-xl shrink-0">
+                ⚖️
+              </div>
+              <div>
+                <p className="text-sm font-medium text-[#1D1D1F]">Advogado sendo designado</p>
+                <p className="text-xs text-[#86868B] mt-0.5 leading-relaxed">
+                  Nossa equipe está selecionando o especialista ideal para o seu perfil.
+                  Você será notificado assim que a designação for concluída.
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
+      </motion.div>
 
       <LawyerProfileModal
         lawyer={showLawyerProfile ? (data?.assignedLawyer as any) : null}

@@ -55,29 +55,31 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title }) => (
       </p>
     </div>
 
-    {/* Right panel — white, form */}
-    <div className="flex-1 flex flex-col items-center justify-center p-6 bg-white">
-      {/* Mobile logo */}
-      <div className="lg:hidden flex items-center gap-1.5 mb-8">
-        <span className="text-lg font-semibold text-[#1D1D1F] font-sans tracking-tight">
-          JurisFlow
-        </span>
-        <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] mt-0.5" aria-hidden="true" />
-      </div>
+    {/* Right panel — white, form; overflow-y-auto at the outer level */}
+    <div className="flex-1 overflow-y-auto bg-white">
+      <div className="min-h-full flex flex-col items-center justify-center p-6">
+        {/* Mobile logo */}
+        <div className="lg:hidden flex items-center gap-1.5 mb-8">
+          <span className="text-lg font-semibold text-[#1D1D1F] font-sans tracking-tight">
+            JurisFlow
+          </span>
+          <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] mt-0.5" aria-hidden="true" />
+        </div>
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full max-w-[400px]"
-      >
-        {title && (
-          <h1 className="text-2xl font-semibold text-[#1D1D1F] mb-6 tracking-[-0.02em]">
-            {title}
-          </h1>
-        )}
-        {children}
-      </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="w-full max-w-[440px]"
+        >
+          {title && (
+            <h1 className="text-2xl font-semibold text-[#1D1D1F] mb-6 tracking-[-0.02em]">
+              {title}
+            </h1>
+          )}
+          {children}
+        </motion.div>
+      </div>
     </div>
   </div>
 )

@@ -725,11 +725,21 @@ export const SignupPage: React.FC = () => {
     <AuthLayout>
       <AnimatePresence mode="wait">
         {role === 'client' ? (
-          <motion.div key="client" {...variants.fadeUp}>
+          <motion.div
+            key="client"
+            variants={variants.fadeUp}
+            initial="hidden"
+            animate="visible"
+          >
             <ClientOnboarding onComplete={() => setDone(true)} />
           </motion.div>
         ) : (
-          <motion.div key="lawyer" {...variants.fadeUp}>
+          <motion.div
+            key="lawyer"
+            variants={variants.fadeUp}
+            initial="hidden"
+            animate="visible"
+          >
             <LawyerOnboarding onComplete={() => setDone(true)} />
           </motion.div>
         )}

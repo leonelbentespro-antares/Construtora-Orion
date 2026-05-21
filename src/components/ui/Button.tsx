@@ -92,6 +92,17 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       .filter(Boolean)
       .join(' ')
 
+    const {
+      onClick, onFocus, onBlur, onMouseDown, onMouseUp,
+      onKeyDown, onKeyUp, onPointerDown, onPointerUp,
+      id, style, form, name, value, tabIndex,
+      role, type,
+      'aria-label': ariaLabel,
+      'aria-controls': ariaControls,
+      'aria-expanded': ariaExpanded,
+      'aria-describedby': ariaDescribedBy,
+    } = props as any
+
     return (
       <MotionButton
         ref={ref}
@@ -99,18 +110,28 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         transition={{ duration: 0.1 }}
         className={cls}
         disabled={isDisabled}
-        type={props.type ?? 'button'}
-        onClick={props.onClick}
-        onFocus={props.onFocus}
-        onBlur={props.onBlur}
-        id={props.id}
-        style={props.style}
-        aria-label={props['aria-label']}
+        type={type ?? 'button'}
+        onClick={onClick}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onMouseDown={onMouseDown}
+        onMouseUp={onMouseUp}
+        onKeyDown={onKeyDown}
+        onKeyUp={onKeyUp}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        id={id}
+        style={style}
+        form={form}
+        name={name}
+        value={value}
+        tabIndex={tabIndex}
+        role={role}
+        aria-label={ariaLabel}
+        aria-controls={ariaControls}
+        aria-expanded={ariaExpanded}
+        aria-describedby={ariaDescribedBy}
         aria-disabled={isDisabled}
-        form={props.form}
-        name={props.name}
-        value={props.value}
-        data-testid={(props as Record<string, unknown>)['data-testid'] as string}
       >
         {loading ? (
           <>

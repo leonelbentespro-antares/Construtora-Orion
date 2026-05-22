@@ -31,7 +31,7 @@ export const LoginPage: React.FC = () => {
   const [resetEmail,  setResetEmail]  = useState('')
   const [showReset,   setShowReset]   = useState(false)
   const [resetSent,   setResetSent]   = useState(false)
-  const { signIn }                    = useAuth()
+  const { signIn, signInWithGoogle }  = useAuth()
   const navigate                      = useNavigate()
 
   const {
@@ -151,9 +151,7 @@ export const LoginPage: React.FC = () => {
           fullWidth
           leftIcon={<GoogleIcon />}
           type="button"
-          onClick={async () => {
-            await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/portal/dashboard` } })
-          }}
+          onClick={() => signInWithGoogle()}
         >
           Google
         </Button>

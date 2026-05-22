@@ -4,16 +4,17 @@ import { supabase } from '../lib/supabase'
 import type { Profile, Company, Lawyer } from '../lib/database.types'
 
 interface AuthContextValue {
-  user:        User | null
-  session:     Session | null
-  profile:     Profile | null
-  company:     Company | null
-  lawyer:      Lawyer | null
-  loading:     boolean
-  signIn:      (email: string, password: string) => Promise<{ error: string | null; role: string | null }>
-  signUp:      (params: SignUpParams) => Promise<{ error: string | null }>
-  signOut:     () => Promise<void>
-  refreshProfile: () => Promise<void>
+  user:             User | null
+  session:          Session | null
+  profile:          Profile | null
+  company:          Company | null
+  lawyer:           Lawyer | null
+  loading:          boolean
+  signIn:           (email: string, password: string) => Promise<{ error: string | null; role: string | null }>
+  signUp:           (params: SignUpParams) => Promise<{ error: string | null }>
+  signInWithGoogle: (role?: 'client' | 'lawyer') => Promise<{ error: string | null }>
+  signOut:          () => Promise<void>
+  refreshProfile:   () => Promise<void>
 }
 
 interface SignUpParams {
@@ -81,12 +82,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       })
       .catch(() => { if (mounted) setLoading(false) })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (!mounted) return
       setSession(session)
       setUser(session?.user ?? null)
+
       if (session?.user) {
-        fetchProfile(session.user.id)
+        const userId = session.user.id
+
+        // On SIGNED_IN via Google OAuth, the DB trigger creates the profile with role='client'
+        // by default. If the user had selected a different role before OAuth, update it now.
+        if (event === 'SIGNED_IN') {
+          const pendingRole = localStorage.getItem('jurisflow:pending-role') as 'client' | 'lawyer' | null
+          if (pendingRole) {
+            localStorage.removeItem('jurisflow:pending-role')
+            supabase.schema('jurisflow').from('profiles')
+              .update({ role: pendingRole })
+              .eq('id', userId)
+              .then(() => { if (mounted) fetchProfile(userId) })
+            return
+          }
+        }
+
+        fetchProfile(userId)
       } else {
         setProfile(null)
         setCompany(null)
@@ -121,6 +139,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: error?.message ?? null }
   }
 
+  const signInWithGoogle = async (role?: 'client' | 'lawyer') => {
+    if (role) localStorage.setItem('jurisflow:pending-role', role)
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    })
+    return { error: error?.message ?? null }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setProfile(null)
@@ -135,7 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{
       user, session, profile, company, lawyer, loading,
-      signIn, signUp, signOut, refreshProfile,
+      signIn, signUp, signInWithGoogle, signOut, refreshProfile,
     }}>
       {children}
     </AuthContext.Provider>

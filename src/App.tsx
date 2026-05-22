@@ -13,6 +13,7 @@ import { SettingsView } from './features/settings/SettingsView'
 import { Landing } from './features/landing/Landing'
 import { LoginPage } from './features/auth/LoginPage'
 import { SignupPage } from './features/auth/SignupPage'
+import { AuthCallback } from './features/auth/AuthCallback'
 import { ClientLayout } from './features/portal/ClientLayout'
 import { ClientDashboard } from './features/portal/Dashboard'
 import { Consultas } from './features/portal/Consultas'
@@ -61,9 +62,10 @@ function AppRoutes() {
   return (
     <Routes>
       {/* JurisFlow public */}
-      <Route path="/jurisflow" element={<Landing />} />
-      <Route path="/login"    element={<LoginPage />} />
-      <Route path="/cadastro" element={<SignupPage />} />
+      <Route path="/jurisflow"      element={<Landing />} />
+      <Route path="/login"          element={<LoginPage />} />
+      <Route path="/cadastro"       element={<SignupPage />} />
+      <Route path="/auth/callback"  element={<AuthCallback />} />
 
       {/* Client portal */}
       <Route path="/portal" element={<PrivateRoute><ClientLayout /></PrivateRoute>}>

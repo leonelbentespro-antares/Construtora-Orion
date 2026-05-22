@@ -48,14 +48,30 @@ const queryClient = new QueryClient({
   },
 })
 
+const Spinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="w-8 h-8 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
+  </div>
+)
+
+// Qualquer usuário autenticado
 const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth()
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin" />
-    </div>
-  )
+  if (loading) return <Spinner />
   return user ? <>{children}</> : <Navigate to="/login" replace />
+}
+
+// Usuário autenticado E com papel específico
+const RoleRoute: React.FC<{
+  roles: string[]
+  children: React.ReactNode
+  redirectTo?: string
+}> = ({ roles, children, redirectTo = '/portal/dashboard' }) => {
+  const { user, profile, loading } = useAuth()
+  if (loading || (user && !profile)) return <Spinner />
+  if (!user) return <Navigate to="/login" replace />
+  if (!roles.includes(profile!.role)) return <Navigate to={redirectTo} replace />
+  return <>{children}</>
 }
 
 function AppRoutes() {
@@ -67,7 +83,7 @@ function AppRoutes() {
       <Route path="/cadastro"       element={<SignupPage />} />
       <Route path="/auth/callback"  element={<AuthCallback />} />
 
-      {/* Client portal */}
+      {/* Client portal — qualquer usuário autenticado */}
       <Route path="/portal" element={<PrivateRoute><ClientLayout /></PrivateRoute>}>
         <Route index                     element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard"          element={<ClientDashboard />} />
@@ -79,8 +95,8 @@ function AppRoutes() {
         <Route path="configuracoes"      element={<ClientConfiguracoes />} />
       </Route>
 
-      {/* Lawyer portal */}
-      <Route path="/advogado" element={<PrivateRoute><LawyerLayout /></PrivateRoute>}>
+      {/* Lawyer portal — somente papel 'lawyer' */}
+      <Route path="/advogado" element={<RoleRoute roles={['lawyer']}><LawyerLayout /></RoleRoute>}>
         <Route index                     element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard"          element={<LawyerDashboard />} />
         <Route path="fila"               element={<Fila />} />
@@ -91,8 +107,8 @@ function AppRoutes() {
         <Route path="configuracoes"      element={<LawyerConfiguracoes />} />
       </Route>
 
-      {/* Admin */}
-      <Route path="/admin" element={<PrivateRoute><AdminLayout /></PrivateRoute>}>
+      {/* Admin — somente papel 'admin' */}
+      <Route path="/admin" element={<RoleRoute roles={['admin']}><AdminLayout /></RoleRoute>}>
         <Route index                     element={<Navigate to="overview" replace />} />
         <Route path="overview"           element={<AdminOverview />} />
         <Route path="plataforma"         element={<AdminComingSoon title="Plataforma" />} />
@@ -103,9 +119,9 @@ function AppRoutes() {
         <Route path="logs"               element={<AdminComingSoon title="Logs" />} />
       </Route>
 
-      {/* Legacy Orion CRM */}
-      <Route path="/" element={<Layout />}>
-        <Route index      element={<Dashboard />} />
+      {/* Legacy Orion CRM — protegido com login */}
+      <Route path="/" element={<PrivateRoute><Layout /></PrivateRoute>}>
+        <Route index           element={<Dashboard />} />
         <Route path="crm"      element={<CRM />} />
         <Route path="obras"    element={<Construction />} />
         <Route path="chat"     element={<Chat />} />

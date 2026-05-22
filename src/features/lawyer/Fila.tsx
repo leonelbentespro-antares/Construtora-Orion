@@ -8,6 +8,7 @@ import { useConsultations, useSendMessage } from '../../hooks/useConsultations'
 import { getSLAStatus, getRemainingText, getSLAColorClass } from '../../lib/sla'
 import { supabase } from '../../lib/supabase'
 import type { Consultation } from '../../lib/database.types'
+import { LawyerChatPanel } from './LawyerChatPanel'
 
 const AREA_LABELS: Record<string, string> = {
   trabalhista: 'Trabalhista', tributario: 'Tributário',
@@ -25,11 +26,13 @@ const tabs: { key: TabKey; label: string }[] = [
 ]
 
 const ResponsePanel: React.FC<{ consultation: Consultation; onClose: () => void }> = ({ consultation, onClose }) => {
-  const [text,       setText]       = useState('')
-  const [suggestion, setSuggestion] = useState('')
-  const [aiLoading,  setAiLoading]  = useState(false)
-  const sendMessage                 = useSendMessage()
-  const clientName                  = (consultation as any).company?.company_name ?? '—'
+  const [text,          setText]         = useState('')
+  const [suggestion,    setSuggestion]   = useState('')
+  const [aiLoading,     setAiLoading]    = useState(false)
+  const [accepting,     setAccepting]    = useState(false)
+  const sendMessage                      = useSendMessage()
+  const clientName                       = (consultation as any).company?.company_name ?? '—'
+  const isActive                         = consultation.status === 'em_andamento'
 
   const handleAI = async () => {
     setAiLoading(true)
@@ -52,6 +55,14 @@ const ResponsePanel: React.FC<{ consultation: Consultation; onClose: () => void 
     }
   }
 
+  const handleAccept = async () => {
+    setAccepting(true)
+    await supabase.schema('jurisflow').from('consultations')
+      .update({ status: 'em_andamento' })
+      .eq('id', consultation.id)
+    setAccepting(false)
+  }
+
   const handleSend = async () => {
     if (text.trim().length < 10) return
     await sendMessage.mutateAsync({ consultationId: consultation.id, content: text.trim() })
@@ -64,6 +75,17 @@ const ResponsePanel: React.FC<{ consultation: Consultation; onClose: () => void 
       animate={{ opacity: 1, y: 0 }}
       className="mt-3 border border-[#2563EB] rounded-[14px] overflow-hidden"
     >
+      {/* ── Chat mode (em_andamento) ── */}
+      {isActive ? (
+        <div className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-[#1D1D1F]">💬 Chat com {clientName}</p>
+            <Button variant="ghost" size="sm" onClick={onClose}>Fechar</Button>
+          </div>
+          <LawyerChatPanel consultationId={consultation.id} clientName={clientName} />
+        </div>
+      ) : (
+      /* ── Initial response mode (aguardando) ── */
       <div className="flex divide-x divide-[#E5E5EA]">
         <div className="flex-1 flex flex-col p-5 gap-4">
           <div className="bg-[#F5F5F7] rounded-[10px] p-3">
@@ -72,7 +94,7 @@ const ResponsePanel: React.FC<{ consultation: Consultation; onClose: () => void 
           </div>
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-xs font-medium text-[#1D1D1F]">Resposta</p>
+              <p className="text-xs font-medium text-[#1D1D1F]">Resposta inicial</p>
               <Button variant="secondary" size="sm" loading={aiLoading} onClick={handleAI} leftIcon={<span>✨</span>}>
                 Sugerir com IA
               </Button>
@@ -89,15 +111,25 @@ const ResponsePanel: React.FC<{ consultation: Consultation; onClose: () => void 
             <textarea
               value={text}
               onChange={(e) => setText(e.target.value)}
-              placeholder="Escreva sua resposta jurídica..."
-              className="w-full min-h-[140px] rounded-[10px] border border-[#D1D1D6] bg-white px-3 py-2.5 text-sm placeholder:text-[#86868B] resize-y focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              placeholder="Escreva sua resposta jurídica inicial..."
+              className="w-full min-h-[120px] rounded-[10px] border border-[#D1D1D6] bg-white px-3 py-2.5 text-sm placeholder:text-[#86868B] resize-y focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
             />
           </div>
           <div className="flex justify-between">
             <Button variant="ghost" size="md" onClick={onClose}>Cancelar</Button>
-            <Button variant="primary" size="md" disabled={text.trim().length < 10} loading={sendMessage.isPending} onClick={handleSend}>
-              Enviar resposta
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="md"
+                loading={accepting}
+                onClick={handleAccept}
+              >
+                ✓ Aceitar consulta
+              </Button>
+              <Button variant="primary" size="md" disabled={text.trim().length < 10} loading={sendMessage.isPending} onClick={handleSend}>
+                Enviar resposta
+              </Button>
+            </div>
           </div>
         </div>
         <div className="w-52 shrink-0 p-4 space-y-3 bg-[#FAFAFA]">
@@ -117,6 +149,7 @@ const ResponsePanel: React.FC<{ consultation: Consultation; onClose: () => void 
           </div>
         </div>
       </div>
+      )}
     </motion.div>
   )
 }

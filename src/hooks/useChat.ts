@@ -23,13 +23,20 @@ export interface ChatMessage {
   created_at:      string
 }
 
+export interface TypingUser {
+  userId: string
+  name:   string
+}
+
 export function useChat(consultationId: string | null) {
-  const [messages, setMessages] = useState<ChatMessage[]>([])
-  const [loading,  setLoading]  = useState(true)
-  const [sending,  setSending]  = useState(false)
-  const [uploading,setUploading]= useState(false)
+  const [messages,    setMessages]    = useState<ChatMessage[]>([])
+  const [loading,     setLoading]     = useState(true)
+  const [sending,     setSending]     = useState(false)
+  const [uploading,   setUploading]   = useState(false)
+  const [typingUsers, setTypingUsers] = useState<Record<string, string>>({})
   const { user, profile } = useAuth()
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const channelRef         = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const typingTimeouts     = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   // Initial load
   useEffect(() => {
@@ -46,12 +53,13 @@ export function useChat(consultationId: string | null) {
       })
   }, [consultationId])
 
-  // Realtime subscription
+  // Realtime: messages + typing broadcast
   useEffect(() => {
-    if (!consultationId) return
+    if (!consultationId || !user) return
 
     const channel = supabase
       .channel(`chat:${consultationId}`)
+      // new messages
       .on(
         'postgres_changes' as any,
         {
@@ -62,17 +70,45 @@ export function useChat(consultationId: string | null) {
         },
         (payload: { new: ChatMessage }) => {
           setMessages((prev) => {
-            // avoid duplicates (optimistic vs realtime)
             if (prev.some((m) => m.id === payload.new.id)) return prev
             return [...prev, payload.new]
           })
         }
       )
+      // typing indicator
+      .on('broadcast', { event: 'typing' }, ({ payload }: { payload: TypingUser }) => {
+        if (payload.userId === user.id) return
+        setTypingUsers((prev) => ({ ...prev, [payload.userId]: payload.name }))
+        // clear after 3s of silence
+        if (typingTimeouts.current[payload.userId]) {
+          clearTimeout(typingTimeouts.current[payload.userId])
+        }
+        typingTimeouts.current[payload.userId] = setTimeout(() => {
+          setTypingUsers((prev) => {
+            const next = { ...prev }
+            delete next[payload.userId]
+            return next
+          })
+        }, 3000)
+      })
       .subscribe()
 
     channelRef.current = channel
-    return () => { supabase.removeChannel(channel) }
-  }, [consultationId])
+    return () => {
+      supabase.removeChannel(channel)
+      Object.values(typingTimeouts.current).forEach(clearTimeout)
+    }
+  }, [consultationId, user])
+
+  // Broadcast typing event (debounced by caller)
+  const sendTyping = useCallback(() => {
+    if (!channelRef.current || !user || !profile) return
+    channelRef.current.send({
+      type:    'broadcast',
+      event:   'typing',
+      payload: { userId: user.id, name: profile.full_name ?? 'Usuário' } as TypingUser,
+    })
+  }, [user, profile])
 
   const sendMessage = useCallback(
     async (content: string, attachments: ChatAttachment[] = []) => {
@@ -123,7 +159,7 @@ export function useChat(consultationId: string | null) {
 
       const { data: signed } = await supabase.storage
         .from('chat-attachments')
-        .createSignedUrl(path, 60 * 60 * 24) // 24h
+        .createSignedUrl(path, 60 * 60 * 24)
 
       if (!signed?.signedUrl) { setUploading(false); return }
 
@@ -145,5 +181,11 @@ export function useChat(consultationId: string | null) {
     [consultationId, user, sendMessage]
   )
 
-  return { messages, loading, sending, uploading, sendMessage, uploadAndSend }
+  const otherTyping = Object.values(typingUsers)
+
+  return {
+    messages, loading, sending, uploading,
+    otherTyping,
+    sendMessage, uploadAndSend, sendTyping,
+  }
 }

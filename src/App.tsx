@@ -32,6 +32,12 @@ import { DocumentosIA } from './features/lawyer/DocumentosIA'
 import { LawyerConfiguracoes } from './features/lawyer/Configuracoes'
 import { AdminLayout } from './features/admin/AdminLayout'
 import { AdminOverview } from './features/admin/AdminOverview'
+import { AdminAdvogados } from './features/admin/AdminAdvogados'
+import { AdminClientes } from './features/admin/AdminClientes'
+import { AdminFinanceiro } from './features/admin/AdminFinanceiro'
+import { AdminAfiliados } from './features/admin/AdminAfiliados'
+import { AdminPlataforma } from './features/admin/AdminPlataforma'
+import { AdminLogs } from './features/admin/AdminLogs'
 import { AuthProvider, useAuth } from './context/AuthContext'
 
 const AdminComingSoon: React.FC<{ title: string }> = ({ title }) => (
@@ -111,12 +117,12 @@ function AppRoutes() {
       <Route path="/admin" element={<RoleRoute roles={['admin']}><AdminLayout /></RoleRoute>}>
         <Route index                     element={<Navigate to="overview" replace />} />
         <Route path="overview"           element={<AdminOverview />} />
-        <Route path="plataforma"         element={<AdminComingSoon title="Plataforma" />} />
-        <Route path="advogados"          element={<AdminComingSoon title="Advogados" />} />
-        <Route path="clientes"           element={<AdminComingSoon title="Clientes" />} />
-        <Route path="financeiro"         element={<AdminComingSoon title="Financeiro" />} />
-        <Route path="afiliados"          element={<AdminComingSoon title="Afiliados" />} />
-        <Route path="logs"               element={<AdminComingSoon title="Logs" />} />
+        <Route path="plataforma"         element={<AdminPlataforma />} />
+        <Route path="advogados"          element={<AdminAdvogados />} />
+        <Route path="clientes"           element={<AdminClientes />} />
+        <Route path="financeiro"         element={<AdminFinanceiro />} />
+        <Route path="afiliados"          element={<AdminAfiliados />} />
+        <Route path="logs"               element={<AdminLogs />} />
       </Route>
 
       {/* Legacy Orion CRM — protegido com login */}

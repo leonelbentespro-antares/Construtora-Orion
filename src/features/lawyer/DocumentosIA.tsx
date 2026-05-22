@@ -10,8 +10,9 @@ import {
   type DocumentType as AIDocType,
 } from '../../lib/ai/documentGenerator'
 import { useDocuments, useRequestDocument, useApproveDocument } from '../../hooks/useDocuments'
+import { useLawyerFinanceiro } from '../../hooks/useFinanceiro'
 import { useAuth } from '../../context/AuthContext'
-import type { Document } from '../../lib/database.types'
+import type { Document, DocumentType } from '../../lib/database.types'
 
 const DOC_LABELS: Record<string, string> = {
   contrato: 'Contrato', nda: 'NDA', notificacao: 'Notificação',
@@ -21,20 +22,23 @@ const DOC_LABELS: Record<string, string> = {
 // ─── Generate Modal ───────────────────────────────────────────────────────────
 
 const GenerateModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { lawyer }       = useAuth()
-  const requestDocument  = useRequestDocument()
+  const { lawyer }                   = useAuth()
+  const requestDocument              = useRequestDocument()
+  const { data: financeiro }         = useLawyerFinanceiro()
+  const clients                      = financeiro?.clients ?? []
 
-  const [type,    setType]    = useState<AIDocType | ''>('')
-  const [context, setContext] = useState('')
-  const [done,    setDone]    = useState(false)
+  const [type,      setType]      = useState<AIDocType | ''>('')
+  const [companyId, setCompanyId] = useState('')
+  const [context,   setContext]   = useState('')
+  const [done,      setDone]      = useState(false)
 
   const handleGenerate = async () => {
-    if (!type) return
+    if (!type || !companyId) return
     await requestDocument.mutateAsync({
-      docType:   'nda',
+      docType:   type as DocumentType,
       title:     DOCUMENT_TEMPLATES[type as AIDocType].name,
       context,
-      companyId: 'placeholder',
+      companyId,
       lawyerId:  lawyer?.id ?? undefined,
     })
     setDone(true)
@@ -62,6 +66,21 @@ const GenerateModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-[#1D1D1F]">Gerar documento com IA</h3>
               <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#F5F5F7] text-[#86868B]">✕</button>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-[#1D1D1F]">Cliente</label>
+              <select
+                value={companyId}
+                onChange={(e) => setCompanyId(e.target.value)}
+                className="w-full h-10 rounded-[10px] border border-[#D1D1D6] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              >
+                <option value="">Selecione o cliente...</option>
+                {clients.map((c: any) => (
+                  <option key={c.company_id} value={c.company_id}>
+                    {c.company?.company_name ?? c.company_id}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-[#1D1D1F]">Tipo de documento</label>
@@ -100,7 +119,7 @@ const GenerateModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
               fullWidth
               size="lg"
               loading={requestDocument.isPending}
-              disabled={!type}
+              disabled={!type || !companyId}
               onClick={handleGenerate}
               leftIcon={<span>✨</span>}
             >

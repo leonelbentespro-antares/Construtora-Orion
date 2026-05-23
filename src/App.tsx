@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MotionConfig } from 'framer-motion'
 import { Layout } from './components/Layout'
 import { Dashboard } from './features/dashboard/Dashboard'
 import { CRM } from './features/crm/CRM'
@@ -140,17 +141,19 @@ function AppRoutes() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SettingsProvider>
-          <CRMProvider>
-            <BrowserRouter>
-              <AppRoutes />
-            </BrowserRouter>
-          </CRMProvider>
-        </SettingsProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <MotionConfig reducedMotion="always">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <SettingsProvider>
+            <CRMProvider>
+              <BrowserRouter>
+                <AppRoutes />
+              </BrowserRouter>
+            </CRMProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </MotionConfig>
   )
 }
 

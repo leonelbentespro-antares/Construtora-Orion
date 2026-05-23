@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { AuthLayout } from './AuthLayout'
@@ -153,12 +153,6 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   const [loading, setLoading] = useState(false)
   const [apiError, setApiError] = useState('')
 
-  const slideVariant = {
-    enter: (dir: number) => ({ opacity: 0, x: dir > 0 ? 20 : -20 }),
-    center: { opacity: 1, x: 0 },
-    exit:  (dir: number) => ({ opacity: 0, x: dir > 0 ? -20 : 20 }),
-  }
-
   const [dir, setDir] = useState(1)
   const next = () => { setDir(1); goNext() }
   const prev = () => { setDir(-1); goPrev() }
@@ -197,16 +191,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
     <div>
       <StepIndicator current={currentStep} total={4} />
 
-      <AnimatePresence mode="wait" custom={dir}>
-        <motion.div
-          key={currentStep}
-          custom={dir}
-          variants={slideVariant}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        >
+      <div>
           {currentStep === 0 && (
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-[#1D1D1F]">Sobre sua empresa</h2>
@@ -312,12 +297,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
               </div>
 
               {/* Affiliate Program Full Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-gradient-to-br from-[#F0FDF4] to-[#DCFCE7] border border-[#86EFAC] rounded-[14px] p-4"
-              >
+              <div className="bg-gradient-to-br from-[#F0FDF4] to-[#DCFCE7] border border-[#86EFAC] rounded-[14px] p-4">
                 <div className="flex items-start gap-2.5">
                   <span className="text-lg shrink-0 mt-0.5">🤝</span>
                   <div className="flex-1">
@@ -355,7 +335,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
           )}
 
@@ -401,8 +381,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
               </div>
             </div>
           )}
-        </motion.div>
-      </AnimatePresence>
+      </div>
 
       {apiError && (
         <p className="mt-4 text-sm text-[#FF3B30] bg-[#FFF1F2] px-3 py-2 rounded-[8px]">{apiError}</p>
@@ -485,26 +464,11 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
     onComplete()
   }
 
-  const slideVariant = {
-    enter: (d: number) => ({ opacity: 0, x: d > 0 ? 20 : -20 }),
-    center: { opacity: 1, x: 0 },
-    exit:  (d: number) => ({ opacity: 0, x: d > 0 ? -20 : 20 }),
-  }
-
   return (
     <div>
       <StepIndicator current={currentStep} total={5} />
 
-      <AnimatePresence mode="wait" custom={dir}>
-        <motion.div
-          key={currentStep}
-          custom={dir}
-          variants={slideVariant}
-          initial="enter"
-          animate="center"
-          exit="exit"
-          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-        >
+      <div>
           <h2 className="text-xl font-semibold text-[#1D1D1F] mb-4">{stepTitles[currentStep]}</h2>
 
           {currentStep === 0 && (
@@ -619,8 +583,7 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
               </div>
             </div>
           )}
-        </motion.div>
-      </AnimatePresence>
+      </div>
 
       {apiError && (
         <p className="mt-4 text-sm text-[#FF3B30] bg-[#FFF1F2] px-3 py-2 rounded-[8px]">{apiError}</p>
@@ -651,20 +614,10 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 const SuccessState: React.FC<{ role: Role }> = ({ role }) => {
   const navigate = useNavigate()
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="text-center space-y-4"
-    >
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 20 }}
-        className="w-16 h-16 rounded-full bg-[#F0FDF4] border-2 border-[#34C759] flex items-center justify-center text-2xl mx-auto"
-      >
+    <div className="text-center space-y-4">
+      <div className="w-16 h-16 rounded-full bg-[#F0FDF4] border-2 border-[#34C759] flex items-center justify-center text-2xl mx-auto">
         ✓
-      </motion.div>
+      </div>
       <h2 className="text-xl font-semibold text-[#1D1D1F]">
         {role === 'lawyer' ? 'Perfil enviado!' : 'Conta criada com sucesso!'}
       </h2>
@@ -683,7 +636,7 @@ const SuccessState: React.FC<{ role: Role }> = ({ role }) => {
           Ir para o login
         </Button>
       )}
-    </motion.div>
+    </div>
   )
 }
 
@@ -729,44 +682,35 @@ export const SignupPage: React.FC = () => {
             onClick={() => setSelectedRole('lawyer')}
           />
 
-          <AnimatePresence>
-            {selectedRole && (
-              <motion.div
-                key="actions"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 4 }}
-                transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                className="space-y-2 pt-1"
+          {selectedRole && (
+            <div className="space-y-2 pt-1">
+              <Button
+                variant="outline"
+                size="lg"
+                fullWidth
+                leftIcon={<GoogleIcon />}
+                loading={googleLoading}
+                onClick={handleGoogle}
               >
-                <Button
-                  variant="outline"
-                  size="lg"
-                  fullWidth
-                  leftIcon={<GoogleIcon />}
-                  loading={googleLoading}
-                  onClick={handleGoogle}
-                >
-                  Continuar com Google
-                </Button>
+                Continuar com Google
+              </Button>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-[#E5E5EA]" />
-                  <span className="text-xs text-[#86868B]">ou preencha seus dados</span>
-                  <div className="flex-1 h-px bg-[#E5E5EA]" />
-                </div>
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-px bg-[#E5E5EA]" />
+                <span className="text-xs text-[#86868B]">ou preencha seus dados</span>
+                <div className="flex-1 h-px bg-[#E5E5EA]" />
+              </div>
 
-                <Button
-                  variant="primary"
-                  size="lg"
-                  fullWidth
-                  onClick={() => setRole(selectedRole)}
-                >
-                  Preencher formulário →
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                onClick={() => setRole(selectedRole)}
+              >
+                Preencher formulário →
+              </Button>
+            </div>
+          )}
 
           <p className="text-sm text-center text-[#6E6E73] pt-2">
             Já tem conta?{' '}

@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
@@ -29,11 +30,31 @@ export function useConsultations(status?: ConsultationStatus) {
       if (error) throw error
       return data as Consultation[]
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 }
 
 export function useConsultation(id: string) {
+  const qc = useQueryClient()
+
+  useEffect(() => {
+    if (!id) return
+    const channel = supabase
+      .channel(`consultation:${id}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'jurisflow', table: 'consultation_messages', filter: `consultation_id=eq.${id}` },
+        () => qc.invalidateQueries({ queryKey: ['consultation', id] }),
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'jurisflow', table: 'consultations', filter: `id=eq.${id}` },
+        () => qc.invalidateQueries({ queryKey: ['consultation', id] }),
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [id, qc])
+
   return useQuery({
     queryKey: ['consultation', id],
     enabled:  !!id,
@@ -52,7 +73,6 @@ export function useConsultation(id: string) {
       if (error) throw error
       return data as Consultation
     },
-    refetchInterval: 10_000,
   })
 }
 

@@ -70,7 +70,7 @@ export function useAdminStats() {
         slaData:           slaData           ?? [],
       }
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 }
 
@@ -118,7 +118,7 @@ export function useAdminLawyerRanking() {
         }))
         .sort((a, b) => b.avg_rating - a.avg_rating || b.review_count - a.review_count)
     },
-    refetchInterval: 60_000,
+    refetchInterval: 120_000,
   })
 }
 

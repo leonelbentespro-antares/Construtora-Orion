@@ -45,7 +45,7 @@ export function useClientDashboard() {
         assignedLawyer:    (assignment as any)?.lawyers ?? null,
       }
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 }
 
@@ -84,6 +84,6 @@ export function useLawyerDashboard() {
         answeredToday:     answeredToday ?? 0,
       }
     },
-    refetchInterval: 30_000,
+    refetchInterval: 60_000,
   })
 }

@@ -34,35 +34,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
 
   const fetchProfile = async (userId: string) => {
-    const { data: prof } = await supabase
-      .schema('jurisflow')
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
+    const [{ data: prof }, { data: comp }, { data: law }] = await Promise.all([
+      supabase.schema('jurisflow').from('profiles').select('*').eq('id', userId).single(),
+      supabase.schema('jurisflow').from('companies').select('*').eq('user_id', userId).maybeSingle(),
+      supabase.schema('jurisflow').from('lawyers').select('*').eq('id', userId).maybeSingle(),
+    ])
 
     if (!prof) return
     setProfile(prof)
-
-    if (prof.role === 'client') {
-      const { data: comp } = await supabase
-        .schema('jurisflow')
-        .from('companies')
-        .select('*')
-        .eq('user_id', userId)
-        .maybeSingle()
-      setCompany(comp)
-    }
-
-    if (prof.role === 'lawyer') {
-      const { data: law } = await supabase
-        .schema('jurisflow')
-        .from('lawyers')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle()
-      setLawyer(law)
-    }
+    setCompany(prof.role === 'client' ? comp : null)
+    setLawyer(prof.role === 'lawyer' ? law : null)
   }
 
   useEffect(() => {

@@ -4,6 +4,7 @@ import { Badge, PlanBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../context/AuthContext'
 import { useClientDashboard } from '../../hooks/useDashboard'
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 
 interface NavItemProps {
   to:     string
@@ -104,7 +105,9 @@ export const ClientLayout: React.FC = () => {
 
       <main className="flex-1 bg-white overflow-y-auto">
         <div className="max-w-6xl mx-auto px-8 py-8">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

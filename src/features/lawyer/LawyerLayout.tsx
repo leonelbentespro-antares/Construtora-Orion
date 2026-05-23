@@ -1,6 +1,7 @@
 import React from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { Badge } from '../../components/ui/Badge'
+import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { useAuth } from '../../context/AuthContext'
 import { useLawyerDashboard } from '../../hooks/useDashboard'
 import { getSLAStatus } from '../../lib/sla'
@@ -105,7 +106,9 @@ export const LawyerLayout: React.FC = () => {
 
       <main className="flex-1 bg-white overflow-y-auto">
         <div className="max-w-6xl mx-auto px-8 py-8">
-          <Outlet />
+          <ErrorBoundary>
+            <Outlet />
+          </ErrorBoundary>
         </div>
       </main>
     </div>

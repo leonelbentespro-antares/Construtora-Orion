@@ -66,19 +66,14 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children, title }) => (
           <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] mt-0.5" aria-hidden="true" />
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-          className="w-full max-w-[440px]"
-        >
+        <div className="w-full max-w-[440px]">
           {title && (
             <h1 className="text-2xl font-semibold text-[#1D1D1F] mb-6 tracking-[-0.02em]">
               {title}
             </h1>
           )}
           {children}
-        </motion.div>
+        </div>
       </div>
     </div>
   </div>

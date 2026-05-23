@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
@@ -10,6 +11,7 @@ import { variants, spring } from '../../lib/motion'
 
 const NavBar: React.FC = () => {
   const [scrolled, setScrolled] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 80)
@@ -43,8 +45,8 @@ const NavBar: React.FC = () => {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm">Entrar</Button>
-          <Button variant="primary" size="sm">Começar grátis</Button>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>Entrar</Button>
+          <Button variant="primary" size="sm" onClick={() => navigate('/cadastro')}>Começar grátis</Button>
         </div>
       </div>
     </motion.nav>
@@ -106,7 +108,9 @@ const HeroGeometric: React.FC = () => (
   </div>
 )
 
-const Hero: React.FC = () => (
+const Hero: React.FC = () => {
+  const navigate = useNavigate()
+  return (
   <section className="relative pt-32 pb-24 overflow-hidden">
     <HeroGeometric />
     <div className="relative max-w-4xl mx-auto px-6 text-center">
@@ -140,10 +144,10 @@ const Hero: React.FC = () => (
           variants={variants.fadeUp}
           className="flex flex-col sm:flex-row items-center justify-center gap-3"
         >
-          <Button variant="primary" size="lg">
+          <Button variant="primary" size="lg" onClick={() => navigate('/cadastro')}>
             Começar por R$497/mês
           </Button>
-          <Button variant="ghost" size="lg" rightIcon={<span>→</span>}>
+          <Button variant="ghost" size="lg" rightIcon={<span>→</span>} onClick={() => navigate('/cadastro')}>
             Ver como funciona
           </Button>
         </motion.div>
@@ -167,7 +171,8 @@ const Hero: React.FC = () => (
       <HeroCard />
     </div>
   </section>
-)
+  )
+}
 
 // ─── Social Proof ─────────────────────────────────────────────────────────────
 
@@ -361,7 +366,9 @@ const plans = [
   },
 ]
 
-const Pricing: React.FC = () => (
+const Pricing: React.FC = () => {
+  const navigate = useNavigate()
+  return (
   <section id="precos" className="py-24 max-w-6xl mx-auto px-6">
     <motion.div
       variants={variants.stagger}
@@ -418,6 +425,7 @@ const Pricing: React.FC = () => (
               <Button
                 variant={plan.highlight ? 'primary' : 'outline'}
                 fullWidth
+                onClick={() => navigate('/cadastro')}
               >
                 {plan.cta}
               </Button>
@@ -427,11 +435,14 @@ const Pricing: React.FC = () => (
       </motion.div>
     </motion.div>
   </section>
-)
+  )
+}
 
 // ─── For Lawyers ──────────────────────────────────────────────────────────────
 
-const ForLawyers: React.FC = () => (
+const ForLawyers: React.FC = () => {
+  const navigate = useNavigate()
+  return (
   <section className="py-24 bg-[#1D1D1F]">
     <div className="max-w-6xl mx-auto px-6">
       <motion.div
@@ -477,6 +488,7 @@ const ForLawyers: React.FC = () => (
             variant="outline"
             size="lg"
             className="border-white/20 text-white hover:bg-white/10 hover:border-white/40"
+            onClick={() => navigate('/cadastro?role=advogado')}
           >
             Cadastrar como advogado →
           </Button>
@@ -484,7 +496,8 @@ const ForLawyers: React.FC = () => (
       </motion.div>
     </div>
   </section>
-)
+  )
+}
 
 // ─── Testimonials ─────────────────────────────────────────────────────────────
 
@@ -561,7 +574,9 @@ const Testimonials: React.FC = () => (
 
 // ─── CTA Banner ───────────────────────────────────────────────────────────────
 
-const CTABanner: React.FC = () => (
+const CTABanner: React.FC = () => {
+  const navigate = useNavigate()
+  return (
   <section className="py-24 max-w-4xl mx-auto px-6 text-center">
     <motion.div
       variants={variants.stagger}
@@ -577,12 +592,13 @@ const CTABanner: React.FC = () => (
         </h2>
       </motion.div>
       <motion.div variants={variants.fadeUp} className="flex flex-col sm:flex-row gap-3 justify-center">
-        <Button variant="primary" size="lg">Começar por R$497/mês</Button>
-        <Button variant="outline" size="lg">Falar com um especialista</Button>
+        <Button variant="primary" size="lg" onClick={() => navigate('/cadastro')}>Começar por R$497/mês</Button>
+        <Button variant="outline" size="lg" onClick={() => navigate('/cadastro')}>Falar com um especialista</Button>
       </motion.div>
     </motion.div>
   </section>
-)
+  )
+}
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
 

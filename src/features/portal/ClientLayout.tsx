@@ -75,7 +75,7 @@ export const ClientLayout: React.FC = () => {
           <NavItem to="/portal/dashboard"     icon="⬜" label="Dashboard" />
           <NavItem to="/portal/consultas"     icon="💬" label="Consultas"  badge={openCount} />
           <NavItem to="/portal/documentos"    icon="📄" label="Documentos" badge={docCount > 0 ? docCount : undefined} />
-          <NavItem to="/portal/afiliados"     icon="🤝" label="Afiliados" />
+          {!company && <NavItem to="/portal/afiliados" icon="🤝" label="Afiliados" />}
           <NavItem to="/portal/financeiro"    icon="💳" label="Financeiro" />
           <NavItem to="/portal/configuracoes" icon="⚙️" label="Configurações" />
         </nav>

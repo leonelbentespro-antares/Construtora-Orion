@@ -13,7 +13,7 @@ import { useAuth } from '../../context/AuthContext'
 
 import { AFFILIATE_CPA, AFFILIATE_RECURRING_PCT, PLAN_VALUES } from '../../lib/payments/asaas'
 
-type Role = 'client' | 'lawyer' | null
+type Role = 'client' | 'individual' | 'lawyer' | null
 
 // ─── Role Selection ───────────────────────────────────────────────────────────
 
@@ -202,13 +202,6 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
             <div className="space-y-4">
               <h2 className="text-xl font-semibold text-[#1D1D1F]">Sobre sua empresa</h2>
 
-              {/* Affiliate teaser pill */}
-              <div className="flex items-center gap-2 bg-[#EFF6FF] border border-[#BFDBFE] rounded-[10px] px-3 py-2">
-                <span className="text-base shrink-0">🤝</span>
-                <p className="text-xs text-[#1D4ED8] font-medium flex-1">
-                  Ao criar sua conta você entra automaticamente no <strong>Programa de Afiliados</strong> — indique empresas e ganhe comissão por cada contrato fechado.
-                </p>
-              </div>
               <Input
                 label="Nome da empresa"
                 placeholder="Empresa Exemplo Ltda"
@@ -269,8 +262,6 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
               <h2 className="text-xl font-semibold text-[#1D1D1F]">Escolha seu plano</h2>
               <div className="space-y-3">
                 {PLANS.map((plan) => {
-                  const cpa = AFFILIATE_CPA[plan.key]
-                  const rec = Math.floor(PLAN_VALUES[plan.key] * AFFILIATE_RECURRING_PCT)
                   return (
                     <button
                       key={plan.key}
@@ -292,61 +283,10 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
                         </div>
                         <span className="text-sm font-semibold text-[#1D1D1F]">{plan.price}</span>
                       </div>
-                      {/* Affiliate earning hint per plan */}
-                      <p className="text-[11px] text-[#6E6E73] mt-1.5">
-                        🤝 Indique e ganhe <strong className="text-[#15803D]">R${cpa}</strong> por conversão
-                        {' '}+ <strong className="text-[#15803D]">R${rec}/mês</strong> recorrente
-                      </p>
                     </button>
                   )
                 })}
               </div>
-
-              {/* Affiliate Program Full Card */}
-              <motion.div
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.15 }}
-                className="bg-gradient-to-br from-[#F0FDF4] to-[#DCFCE7] border border-[#86EFAC] rounded-[14px] p-4"
-              >
-                <div className="flex items-start gap-2.5">
-                  <span className="text-lg shrink-0 mt-0.5">🤝</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-[#15803D]">
-                      Programa de Afiliados — incluso em todos os planos
-                    </p>
-                    <p className="text-xs text-[#166534] mt-0.5 mb-3 leading-relaxed">
-                      Ao ativar sua conta você recebe um link de indicação único.
-                      Cada empresa que contratar via seu link gera comissão para você,
-                      paga 30 dias após a assinatura.
-                    </p>
-
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                      {(
-                        [
-                          { label: 'Essencial',    cpa: AFFILIATE_CPA.essencial,    rec: Math.floor(PLAN_VALUES.essencial    * AFFILIATE_RECURRING_PCT) },
-                          { label: 'Profissional', cpa: AFFILIATE_CPA.profissional, rec: Math.floor(PLAN_VALUES.profissional * AFFILIATE_RECURRING_PCT) },
-                          { label: 'Empresarial',  cpa: AFFILIATE_CPA.empresarial,  rec: Math.floor(PLAN_VALUES.empresarial  * AFFILIATE_RECURRING_PCT) },
-                        ] as const
-                      ).map(({ label, cpa, rec }) => (
-                        <div key={label} className="bg-white/80 rounded-[10px] p-2.5 text-center border border-white">
-                          <p className="text-[10px] text-[#6E6E73] font-medium mb-1">{label}</p>
-                          <p className="text-base font-bold text-[#15803D]">R${cpa}</p>
-                          <p className="text-[10px] text-[#6E6E73]">+ R${rec}/mês</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="bg-white/60 rounded-[8px] px-3 py-2">
-                      <p className="text-[11px] text-[#166534] leading-relaxed">
-                        <strong>Exemplo:</strong> indicou uma empresa que assinou o Profissional →
-                        você recebe <strong>R$498</strong> no mês 1 e mais <strong>R$99/mês</strong> enquanto
-                        ela ficar ativa. Em 6 meses = <strong>R$1.092 acumulados</strong> de uma única indicação.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
             </div>
           )}
 
@@ -380,16 +320,6 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
                 </span>
               </label>
 
-              {/* Affiliate reminder on final step */}
-              <div className="flex items-start gap-2 bg-[#F0FDF4] border border-[#86EFAC] rounded-[10px] px-3 py-2.5">
-                <span className="text-base shrink-0">✅</span>
-                <p className="text-xs text-[#15803D] leading-relaxed">
-                  <strong>Programa de Afiliados ativado automaticamente.</strong>{' '}
-                  Ao concluir o cadastro você já receberá seu link de indicação no portal.
-                  Ganhe até <strong>R${AFFILIATE_CPA.empresarial}</strong> por empresa indicada
-                  + <strong>{(AFFILIATE_RECURRING_PCT * 100).toFixed(0)}% do valor</strong> do plano todo mês.
-                </p>
-              </div>
             </div>
           )}
         </motion.div>
@@ -637,6 +567,288 @@ const LawyerOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   )
 }
 
+// ─── Individual (Pessoa Física) Steps ────────────────────────────────────────
+
+const INDIVIDUAL_AREAS = [
+  'Trabalhista', 'Família', 'Herança/Inventário', 'Criminal',
+  'Previdenciário', 'Consumidor', 'Imobiliário', 'Contratos',
+  'LGPD', 'Trânsito',
+]
+
+type IndividualPlanKey = 'basico' | 'essencial' | 'completo'
+
+const INDIVIDUAL_PLANS: { key: IndividualPlanKey; name: string; price: string; desc: string; features: string[]; highlight: boolean }[] = [
+  {
+    key: 'basico',
+    name: 'Básico',
+    price: 'R$197/mês',
+    desc: 'Para quem precisa de apoio jurídico eventual.',
+    features: ['2 consultas por mês', 'Resposta em 24h', '1 documento por mês'],
+    highlight: false,
+  },
+  {
+    key: 'essencial',
+    name: 'Essencial',
+    price: 'R$397/mês',
+    desc: 'Assessoria jurídica contínua para o dia a dia.',
+    features: ['5 consultas por mês', 'Resposta em 12h', '3 documentos por mês', 'Revisão de contratos'],
+    highlight: true,
+  },
+  {
+    key: 'completo',
+    name: 'Completo',
+    price: 'R$697/mês',
+    desc: 'Proteção jurídica total sem surpresas.',
+    features: ['Consultas ilimitadas', 'Resposta em 4h (SLA)', 'Documentos ilimitados', 'Advogado dedicado'],
+    highlight: false,
+  },
+]
+
+interface IndividualData {
+  fullName: string
+  cpf:      string
+  phone:    string
+  city:     string
+  state:    string
+  areas:    string[]
+  plan:     IndividualPlanKey | null
+  email:    string
+  password: string
+}
+
+const STATES_BR = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS',
+  'MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO']
+
+const IndividualOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
+  const { signUp } = useAuth()
+  const { currentStep, goNext, goPrev, isFirst, isLast } = useMultiStep({
+    totalSteps: 4,
+    storageKey: 'jurisflow:individual-signup',
+  })
+
+  const [data, setData] = useState<IndividualData>({
+    fullName: '', cpf: '', phone: '', city: '', state: '',
+    areas: [], plan: null, email: '', password: '',
+  })
+  const [loading,  setLoading]  = useState(false)
+  const [apiError, setApiError] = useState('')
+
+  const [dir, setDir] = useState(1)
+  const next = () => { setDir(1); goNext() }
+  const prev = () => { setDir(-1); goPrev() }
+
+  const toggleArea = (area: string) =>
+    setData((d) => ({
+      ...d,
+      areas: d.areas.includes(area)
+        ? d.areas.filter((a) => a !== area)
+        : [...d.areas, area],
+    }))
+
+  const handleSubmit = async () => {
+    if (!data.email || !data.password) {
+      setApiError('Preencha e-mail e senha.')
+      return
+    }
+    setLoading(true)
+    setApiError('')
+    const { error } = await signUp({
+      email:    data.email,
+      password: data.password,
+      fullName: data.fullName || data.email,
+      role:     'client',
+    })
+    setLoading(false)
+    if (error) { setApiError(error); return }
+    onComplete()
+  }
+
+  return (
+    <div>
+      <StepIndicator current={currentStep} total={4} />
+
+      <div>
+        {currentStep === 0 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-[#1D1D1F]">Seus dados pessoais</h2>
+            <div className="flex items-center gap-2 bg-[#EFF6FF] border border-[#BFDBFE] rounded-[10px] px-3 py-2">
+              <span className="text-base shrink-0">🤝</span>
+              <p className="text-xs text-[#1D4ED8] font-medium flex-1">
+                Como pessoa física, você também acessa o <strong>Programa de Afiliados</strong> — indique empresas e ganhe comissão por cada contrato fechado.
+              </p>
+            </div>
+            <Input
+              label="Nome completo"
+              placeholder="João da Silva"
+              value={data.fullName}
+              onChange={(e) => setData((d) => ({ ...d, fullName: e.target.value }))}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="CPF"
+                placeholder="000.000.000-00"
+                value={data.cpf}
+                onChange={(e) => setData((d) => ({ ...d, cpf: e.target.value }))}
+              />
+              <Input
+                label="Telefone"
+                type="tel"
+                placeholder="(11) 99999-9999"
+                value={data.phone}
+                onChange={(e) => setData((d) => ({ ...d, phone: e.target.value }))}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Input
+                label="Cidade"
+                placeholder="São Paulo"
+                value={data.city}
+                onChange={(e) => setData((d) => ({ ...d, city: e.target.value }))}
+              />
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-[#1D1D1F]">Estado</label>
+                <select
+                  value={data.state}
+                  onChange={(e) => setData((d) => ({ ...d, state: e.target.value }))}
+                  className="w-full h-10 rounded-[10px] border border-[#D1D1D6] bg-white px-3 text-sm text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                >
+                  <option value="">UF</option>
+                  {STATES_BR.map((s) => <option key={s}>{s}</option>)}
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {currentStep === 1 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-[#1D1D1F]">Qual é a sua necessidade?</h2>
+            <p className="text-sm text-[#6E6E73]">Selecione as áreas jurídicas que se encaixam na sua situação.</p>
+            <div className="flex flex-wrap gap-2">
+              {INDIVIDUAL_AREAS.map((area) => (
+                <AreaToggle
+                  key={area}
+                  label={area}
+                  selected={data.areas.includes(area)}
+                  onClick={() => toggleArea(area)}
+                />
+              ))}
+            </div>
+            {data.areas.length === 0 && (
+              <p className="text-sm text-[#FF3B30]">Selecione pelo menos uma área.</p>
+            )}
+            <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-[10px] p-3 text-xs text-[#1D4ED8]">
+              ℹ Conectamos você com o advogado certo para sua situação específica.
+            </div>
+          </div>
+        )}
+
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-[#1D1D1F]">Escolha seu plano</h2>
+            <div className="space-y-3">
+              {INDIVIDUAL_PLANS.map((plan) => (
+                <button
+                  key={plan.key}
+                  type="button"
+                  onClick={() => setData((d) => ({ ...d, plan: plan.key }))}
+                  className={[
+                    'w-full text-left p-4 rounded-[12px] border-2 transition-all duration-150 cursor-pointer',
+                    data.plan === plan.key
+                      ? 'border-[#2563EB] bg-[#EFF6FF]'
+                      : 'border-[#E5E5EA] bg-white hover:border-[#86868B]',
+                  ].join(' ')}
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-sm text-[#1D1D1F]">{plan.name}</span>
+                      {plan.highlight && <Badge variant="blue" size="sm">Popular</Badge>}
+                    </div>
+                    <span className="text-sm font-semibold text-[#1D1D1F]">{plan.price}</span>
+                  </div>
+                  <p className="text-xs text-[#6E6E73] mb-2">{plan.desc}</p>
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                    {plan.features.map((f) => (
+                      <span key={f} className="text-[11px] text-[#34C759] font-medium">✓ {f}</span>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {currentStep === 3 && (
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold text-[#1D1D1F]">Criar seu acesso</h2>
+            <Input
+              label="E-mail"
+              type="email"
+              placeholder="voce@email.com"
+              value={data.email}
+              onChange={(e) => setData((d) => ({ ...d, email: e.target.value }))}
+            />
+            <Input
+              label="Senha"
+              type="password"
+              placeholder="Mínimo 8 caracteres"
+              value={data.password}
+              onChange={(e) => setData((d) => ({ ...d, password: e.target.value }))}
+            />
+            <div className="bg-[#F5F5F7] rounded-[10px] p-4 text-sm text-[#6E6E73]">
+              💳 Dados de pagamento solicitados na próxima etapa em ambiente seguro.
+            </div>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input type="checkbox" className="mt-0.5 accent-[#2563EB]" required />
+              <span className="text-sm text-[#6E6E73]">
+                Li e aceito os{' '}
+                <a href="#" className="text-[#2563EB] underline">Termos de Uso</a>{' '}
+                e a{' '}
+                <a href="#" className="text-[#2563EB] underline">Política de Privacidade (LGPD)</a>
+              </span>
+            </label>
+            <div className="flex items-start gap-2 bg-[#F0FDF4] border border-[#86EFAC] rounded-[10px] px-3 py-2.5">
+              <span className="text-base shrink-0">✅</span>
+              <p className="text-xs text-[#15803D] leading-relaxed">
+                <strong>Programa de Afiliados ativado automaticamente.</strong>{' '}
+                Ao concluir o cadastro você já receberá seu link de indicação no portal.
+                Ganhe até <strong>R${AFFILIATE_CPA.empresarial}</strong> por empresa indicada
+                + <strong>{(AFFILIATE_RECURRING_PCT * 100).toFixed(0)}% do valor</strong> do plano todo mês.
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {apiError && (
+        <p className="mt-4 text-sm text-[#FF3B30] bg-[#FFF1F2] px-3 py-2 rounded-[8px]">{apiError}</p>
+      )}
+
+      <div className="flex items-center justify-between mt-4">
+        {!isFirst ? (
+          <Button variant="ghost" size="md" onClick={prev}>← Voltar</Button>
+        ) : (
+          <span />
+        )}
+        {isLast ? (
+          <Button variant="primary" size="md" loading={loading} onClick={handleSubmit}>
+            Criar minha conta →
+          </Button>
+        ) : (
+          <Button
+            variant="primary"
+            size="md"
+            onClick={next}
+            disabled={currentStep === 1 && data.areas.length === 0}
+          >
+            Continuar →
+          </Button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Success State ────────────────────────────────────────────────────────────
 
 const SuccessState: React.FC<{ role: Role }> = ({ role }) => {
@@ -662,9 +874,11 @@ const SuccessState: React.FC<{ role: Role }> = ({ role }) => {
       <p className="text-sm text-[#6E6E73] max-w-xs mx-auto leading-relaxed">
         {role === 'lawyer'
           ? 'Analisamos em até 48 horas úteis. Você receberá um e-mail quando aprovado.'
+          : role === 'individual'
+          ? 'Confirme seu e-mail. Em breve conectaremos você ao advogado ideal para sua situação.'
           : 'Confirme seu e-mail e acesse seu portal jurídico.'}
       </p>
-      {role === 'client' && (
+      {(role === 'client' || role === 'individual') && (
         <Button variant="primary" size="lg" fullWidth onClick={() => navigate('/login')}>
           Ir para o login →
         </Button>
@@ -681,8 +895,9 @@ const SuccessState: React.FC<{ role: Role }> = ({ role }) => {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export const SignupPage: React.FC = () => {
-  const [role, setRole] = useState<Role>(null)
-  const [done, setDone] = useState(false)
+  const [role,         setRole]         = useState<Role>(null)
+  const [selectedRole, setSelectedRole] = useState<Role>(null)
+  const [done,         setDone]         = useState(false)
 
   if (done) {
     return (
@@ -700,16 +915,37 @@ export const SignupPage: React.FC = () => {
             icon="🏢"
             title="Sou uma empresa"
             subtitle="Quero contratar serviços jurídicos para meu negócio"
-            selected={role === 'client'}
-            onClick={() => setRole('client')}
+            selected={selectedRole === 'client'}
+            onClick={() => setSelectedRole('client')}
+          />
+          <RoleCard
+            icon="👤"
+            title="Sou pessoa física"
+            subtitle="Preciso de apoio jurídico para questões pessoais"
+            selected={selectedRole === 'individual'}
+            onClick={() => setSelectedRole('individual')}
           />
           <RoleCard
             icon="⚖️"
             title="Sou advogado"
             subtitle="Quero atender clientes pela plataforma"
-            selected={role === 'lawyer'}
-            onClick={() => setRole('lawyer')}
+            selected={selectedRole === 'lawyer'}
+            onClick={() => setSelectedRole('lawyer')}
           />
+
+          {selectedRole && (
+            <div className="pt-1">
+              <Button
+                variant="primary"
+                size="lg"
+                fullWidth
+                onClick={() => setRole(selectedRole)}
+              >
+                Preencher formulário →
+              </Button>
+            </div>
+          )}
+
           <p className="text-sm text-center text-[#6E6E73] pt-2">
             Já tem conta?{' '}
             <a href="/login" className="text-[#2563EB] hover:text-[#1D4ED8] font-medium">
@@ -724,7 +960,16 @@ export const SignupPage: React.FC = () => {
   return (
     <AuthLayout>
       <AnimatePresence mode="wait">
-        {role === 'client' ? (
+        {role === 'individual' ? (
+          <motion.div
+            key="individual"
+            variants={variants.fadeUp}
+            initial="hidden"
+            animate="visible"
+          >
+            <IndividualOnboarding onComplete={() => setDone(true)} />
+          </motion.div>
+        ) : role === 'client' ? (
           <motion.div
             key="client"
             variants={variants.fadeUp}

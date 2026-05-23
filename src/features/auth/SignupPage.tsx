@@ -8,7 +8,7 @@ import { Input } from '../../components/ui/Input'
 import { Card } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { useMultiStep } from './useMultiStep'
-import { variants, spring } from '../../lib/motion'
+import { spring } from '../../lib/motion'
 import { useAuth } from '../../context/AuthContext'
 
 const GoogleIcon = () => (
@@ -781,27 +781,11 @@ export const SignupPage: React.FC = () => {
 
   return (
     <AuthLayout>
-      <AnimatePresence mode="wait">
-        {role === 'client' ? (
-          <motion.div
-            key="client"
-            variants={variants.fadeUp}
-            initial="hidden"
-            animate="visible"
-          >
-            <ClientOnboarding onComplete={() => setDone(true)} />
-          </motion.div>
-        ) : (
-          <motion.div
-            key="lawyer"
-            variants={variants.fadeUp}
-            initial="hidden"
-            animate="visible"
-          >
-            <LawyerOnboarding onComplete={() => setDone(true)} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {role === 'client' ? (
+        <ClientOnboarding onComplete={() => setDone(true)} />
+      ) : (
+        <LawyerOnboarding onComplete={() => setDone(true)} />
+      )}
     </AuthLayout>
   )
 }

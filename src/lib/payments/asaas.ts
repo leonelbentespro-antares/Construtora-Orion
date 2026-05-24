@@ -58,9 +58,16 @@ export const AFFILIATE_RECURRING_PCT = 0.10
 export const LAWYER_REVENUE_SHARE    = 0.55
 export const LAWYER_BASE_PER_CLIENT  = 300
 
+// ─── Feature flag ─────────────────────────────────────────────────────────────
+
+export const ASAAS_ENABLED = import.meta.env.VITE_ASAAS_ENABLED === 'true'
+
 // ─── Edge Function proxy helpers ─────────────────────────────────────────────
 
 async function asaasInvoke<T>(action: string, params: Record<string, unknown>): Promise<T> {
+  if (!ASAAS_ENABLED) {
+    throw new Error('Pagamentos Asaas não estão habilitados neste ambiente. Defina VITE_ASAAS_ENABLED=true para ativar.')
+  }
   const { data, error } = await supabase.functions.invoke('asaas', {
     body: { action, ...params },
   })

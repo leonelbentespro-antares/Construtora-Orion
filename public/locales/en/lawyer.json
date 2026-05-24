@@ -1,0 +1,51 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "queue": "Consultation queue",
+    "sla": "SLA Monitor",
+    "clients": "Clients",
+    "documents": "AI Documents",
+    "financial": "Financial",
+    "settings": "Settings",
+    "logout": "Sign out"
+  },
+  "financial": {
+    "title": "Financial",
+    "month_estimate": "Month estimate",
+    "next_payout": "Next payout",
+    "payout_day": "10th",
+    "confirmed": "Confirmed",
+    "no_pending": "No pending payout",
+    "last_payout": "Last payout",
+    "no_payout": "No payouts received yet",
+    "history_title": "Payout history",
+    "history_detail": "Detailed history",
+    "no_history": "No payouts recorded yet.",
+    "via_pix": "via PIX",
+    "base": "Base",
+    "share": "Share",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "processing": "Processing",
+      "paid": "Paid",
+      "failed": "Failed"
+    }
+  },
+  "clients": {
+    "title": "Clients",
+    "active_count_one": "{{count}} active client",
+    "active_count_other": "{{count}} active clients",
+    "none": "No clients assigned yet.",
+    "renewal": "Renewal"
+  },
+  "documents": {
+    "title": "AI Documents"
+  },
+  "queue": {
+    "title": "Consultation queue"
+  },
+  "sla": {
+    "title": "SLA Monitor"
+  }
+}

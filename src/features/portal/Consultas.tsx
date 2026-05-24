@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '../../components/ui/Button'
 import { Card } from '../../components/ui/Card'
 import { Badge, StatusBadge } from '../../components/ui/Badge'
@@ -9,6 +10,7 @@ import { variants } from '../../lib/motion'
 import { useConsultations, useOpenConsultation } from '../../hooks/useConsultations'
 import { useAuth } from '../../context/AuthContext'
 import { getSLAStatus, getRemainingText } from '../../lib/sla'
+import { formatDateTime } from '../../lib/i18n/format'
 import type { ConsultationStatus, LegalArea } from '../../lib/database.types'
 
 const LEGAL_AREAS: LegalArea[] = [
@@ -16,32 +18,15 @@ const LEGAL_AREAS: LegalArea[] = [
   'imobiliario', 'consumidor', 'ambiental', 'lgpd',
 ]
 
-const AREA_LABELS: Record<LegalArea, string> = {
-  trabalhista: 'Trabalhista',
-  tributario:  'Tributário',
-  contratos:   'Contratos',
-  societario:  'Societário',
-  imobiliario: 'Imobiliário',
-  consumidor:  'Consumidor',
-  ambiental:   'Ambiental',
-  lgpd:        'LGPD',
-}
-
 type TabKey = 'all' | ConsultationStatus
 
-const tabs: { key: TabKey; label: string }[] = [
-  { key: 'all',          label: 'Todas'        },
-  { key: 'aguardando',   label: 'Aguardando'   },
-  { key: 'em_andamento', label: 'Em andamento' },
-  { key: 'concluida',    label: 'Concluídas'   },
-  { key: 'arquivada',    label: 'Arquivadas'   },
-]
-
-// ─── New Consultation Slide-over ──────────────────────────────────────────────
+// ─── New Consultation Slide-over ─────────────────────────────────────────────
 
 const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
   const { company, profile }    = useAuth()
   const openConsultation        = useOpenConsultation()
+  const { t }                   = useTranslation('portal')
+  const { t: tCommon }          = useTranslation('common')
 
   const [area,        setArea]        = useState<LegalArea | ''>('')
   const [title,       setTitle]       = useState('')
@@ -52,10 +37,7 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
   const subscriptionId = (profile as any)?.subscription_id ?? ''
 
   const handleSubmit = async () => {
-    if (!company?.id) {
-      setError('Empresa não encontrada.')
-      return
-    }
+    if (!company?.id) return
     if (!area || !title || description.length < 20) return
     setError('')
     try {
@@ -69,7 +51,7 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
       })
       setSubmitted(true)
     } catch (e: any) {
-      setError(e?.message ?? 'Erro ao enviar consulta.')
+      setError(e?.message ?? tCommon('errors.generic'))
     }
   }
 
@@ -92,7 +74,7 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
             className="fixed right-0 top-0 bottom-0 w-[480px] bg-white z-50 flex flex-col shadow-[0_0_40px_rgba(0,0,0,0.15)]"
           >
             <div className="flex items-center justify-between px-6 py-5 border-b border-[#E5E5EA]">
-              <h2 className="text-lg font-semibold text-[#1D1D1F]">Nova consulta</h2>
+              <h2 className="text-lg font-semibold text-[#1D1D1F]">{t('consultations.new')}</h2>
               <button
                 onClick={onClose}
                 className="w-8 h-8 rounded-full hover:bg-[#F5F5F7] flex items-center justify-center text-[#86868B] transition-colors"
@@ -111,22 +93,18 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                   <div className="w-14 h-14 rounded-full bg-[#F0FDF4] border-2 border-[#34C759] flex items-center justify-center text-2xl mx-auto">
                     ✓
                   </div>
-                  <h3 className="font-semibold text-[#1D1D1F]">Consulta enviada!</h3>
-                  <p className="text-sm text-[#6E6E73]">
-                    Seu advogado responderá em breve conforme o SLA do seu plano.
-                  </p>
-                  <Button variant="primary" size="md" onClick={onClose}>Fechar</Button>
+                  <h3 className="font-semibold text-[#1D1D1F]">{t('consultations.sent')}</h3>
+                  <Button variant="primary" size="md" onClick={onClose}>{tCommon('actions.close')}</Button>
                 </motion.div>
               ) : (
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <p className="text-sm font-medium text-[#1D1D1F]">
                       <span className="inline-flex w-5 h-5 rounded-full bg-[#2563EB] text-white text-xs items-center justify-center mr-2">1</span>
-                      Título da consulta
+                      {t('consultations.fields.title_label')}
                     </p>
                     <input
                       className="w-full h-10 rounded-[10px] border border-[#D1D1D6] px-3 text-sm text-[#1D1D1F] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-                      placeholder="Ex: Rescisão de contrato com fornecedor"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                     />
@@ -135,7 +113,7 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                   <div className="space-y-3">
                     <p className="text-sm font-medium text-[#1D1D1F]">
                       <span className="inline-flex w-5 h-5 rounded-full bg-[#2563EB] text-white text-xs items-center justify-center mr-2">2</span>
-                      Área jurídica
+                      {t('consultations.fields.legal_area')}
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {LEGAL_AREAS.map((a) => (
@@ -150,7 +128,7 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                               : 'bg-white text-[#1D1D1F] border-[#D1D1D6] hover:border-[#86868B]',
                           ].join(' ')}
                         >
-                          {AREA_LABELS[a]}
+                          {tCommon(`legal_areas.${a}` as any, { defaultValue: a })}
                         </button>
                       ))}
                     </div>
@@ -159,10 +137,8 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                   <div>
                     <p className="text-sm font-medium text-[#1D1D1F] mb-2">
                       <span className="inline-flex w-5 h-5 rounded-full bg-[#2563EB] text-white text-xs items-center justify-center mr-2">3</span>
-                      Descreva sua situação
                     </p>
                     <Textarea
-                      placeholder="Descreva sua situação em detalhes. Quanto mais informações, melhor será a resposta do advogado."
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       maxLength={3000}
@@ -188,7 +164,7 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
                   loading={openConsultation.isPending}
                   onClick={handleSubmit}
                 >
-                  Enviar consulta
+                  {tCommon('actions.send')}
                 </Button>
               </div>
             )}
@@ -199,12 +175,22 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
   )
 }
 
-// ─── Consultations List ────────────────────────────────────────────────────────
+// ─── Consultations List ───────────────────────────────────────────────────────
 
 export const Consultas: React.FC = () => {
   const [activeTab,     setActiveTab]     = useState<TabKey>('all')
   const [slideOverOpen, setSlideOverOpen] = useState(false)
-  const navigate = useNavigate()
+  const navigate                          = useNavigate()
+  const { t }                             = useTranslation('portal')
+  const { t: tCommon }                    = useTranslation('common')
+
+  const tabs: { key: TabKey; label: string }[] = [
+    { key: 'all',          label: t('consultations.status.all')         },
+    { key: 'aguardando',   label: t('consultations.status.waiting')     },
+    { key: 'em_andamento', label: t('consultations.status.in_progress') },
+    { key: 'concluida',    label: t('consultations.status.done')        },
+    { key: 'arquivada',    label: t('consultations.status.archived')    },
+  ]
 
   const { data: consultations, isLoading } = useConsultations()
 
@@ -222,9 +208,9 @@ export const Consultas: React.FC = () => {
       className="space-y-6"
     >
       <motion.div variants={variants.fadeUp} className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-[#1D1D1F] tracking-tight">Consultas</h1>
+        <h1 className="text-2xl font-semibold text-[#1D1D1F] tracking-tight">{t('consultations.title')}</h1>
         <Button variant="primary" size="md" leftIcon={<span>+</span>} onClick={() => setSlideOverOpen(true)}>
-          Nova consulta
+          {t('consultations.new')}
         </Button>
       </motion.div>
 
@@ -258,9 +244,7 @@ export const Consultas: React.FC = () => {
             const slaStatus  = getSLAStatus(deadline)
             const remaining  = getRemainingText(deadline)
             const lawyerName = (c as any).lawyer?.profile?.full_name ?? null
-            const openedAt   = new Date(c.created_at).toLocaleString('pt-BR', {
-              day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-            })
+            const openedAt   = formatDateTime(c.created_at)
 
             return (
               <motion.div key={c.id} variants={variants.cardEnter}>
@@ -269,7 +253,9 @@ export const Consultas: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[#1D1D1F] mb-1.5">{c.title}</p>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge variant="gray" size="sm">{AREA_LABELS[c.legal_area] ?? c.legal_area}</Badge>
+                        <Badge variant="gray" size="sm">
+                          {tCommon(`legal_areas.${c.legal_area}` as any, { defaultValue: c.legal_area })}
+                        </Badge>
                         <StatusBadge status={c.status} />
                         <span className="text-xs text-[#86868B]">{openedAt}</span>
                       </div>
@@ -299,7 +285,6 @@ export const Consultas: React.FC = () => {
           {filtered.length === 0 && (
             <div className="text-center py-16 text-[#86868B]">
               <p className="text-3xl mb-3">📭</p>
-              <p className="text-sm">Nenhuma consulta nesta categoria</p>
             </div>
           )}
         </motion.div>

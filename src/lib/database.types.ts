@@ -17,19 +17,24 @@ export interface Profile {
   email:      string
   phone:      string | null
   avatar_url: string | null
+  country:    string
+  language:   string
   created_at: string
   updated_at: string
 }
 
 export interface Company {
-  id:           string
-  user_id:      string
-  cnpj:         string | null
-  company_name: string
-  segment:      string | null
-  company_size: string | null
-  legal_areas:  LegalArea[]
-  created_at:   string
+  id:             string
+  user_id:        string
+  cnpj:           string | null
+  company_name:   string
+  segment:        string | null
+  company_size:   string | null
+  legal_areas:    LegalArea[]
+  country:        string
+  state_province: string | null
+  city:           string | null
+  created_at:     string
 }
 
 export interface Plan {
@@ -61,8 +66,8 @@ export interface Subscription {
 
 export interface Lawyer {
   id:               string
-  oab_state:        string
-  oab_number:       string
+  oab_state:        string | null
+  oab_number:       string | null
   oab_doc_url:      string | null
   specialties:      LegalArea[]
   experience_years: number
@@ -75,6 +80,13 @@ export interface Lawyer {
   avg_response_hours: number | null
   rating:           number | null
   max_clients:      number
+  country:          string
+  state_province:   string | null
+  city:             string | null
+  bar_association:  string | null
+  bar_number_intl:  string | null
+  document_type:    string | null
+  document_number:  string | null
   created_at:       string
   updated_at:       string
   profile?:         Profile

@@ -1,7 +1,9 @@
 import React from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Badge } from '../../components/ui/Badge'
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
+import { LanguageSwitcher } from '../../components/ui/LanguageSwitcher'
 import { useAuth } from '../../context/AuthContext'
 import { useLawyerDashboard } from '../../hooks/useDashboard'
 import { getSLAStatus } from '../../lib/sla'
@@ -38,8 +40,9 @@ export const LawyerLayout: React.FC = () => {
   const { profile, lawyer, signOut } = useAuth()
   const { data: dashboard }          = useLawyerDashboard()
   const navigate                     = useNavigate()
+  const { t }                        = useTranslation('lawyer')
 
-  const openCount    = dashboard?.openConsultations?.length ?? 0
+  const openCount     = dashboard?.openConsultations?.length ?? 0
   const criticalCount = dashboard?.openConsultations?.filter(
     (c) => getSLAStatus(new Date(c.sla_deadline)) === 'critical'
   ).length ?? 0
@@ -47,7 +50,11 @@ export const LawyerLayout: React.FC = () => {
   const initials    = (profile?.full_name ?? '??')
     .split(' ').slice(0, 2).map((w: string) => w[0]).join('').toUpperCase()
   const displayName = profile?.full_name ?? '—'
-  const oab         = lawyer ? `OAB/${lawyer.oab_state} ${lawyer.oab_number}` : null
+  const oab         = lawyer?.oab_state && lawyer?.oab_number
+    ? `OAB/${lawyer.oab_state} ${lawyer.oab_number}`
+    : lawyer?.bar_association && lawyer?.bar_number_intl
+      ? `${lawyer.bar_association} ${lawyer.bar_number_intl}`
+      : null
 
   const specialties = lawyer?.specialties?.slice(0, 2) ?? []
 
@@ -84,22 +91,23 @@ export const LawyerLayout: React.FC = () => {
 
         {/* Nav */}
         <nav className="flex-1 p-3 space-y-0.5">
-          <NavItem to="/advogado/dashboard"     icon="⬜" label="Dashboard" />
-          <NavItem to="/advogado/fila"          icon="📋" label="Fila de consultas" badge={openCount} />
-          <NavItem to="/advogado/sla"           icon="⏱" label="SLA Monitor"       badge={criticalCount} urgent />
-          <NavItem to="/advogado/clientes"      icon="👤" label="Clientes"          badge={dashboard?.activeClientCount} />
-          <NavItem to="/advogado/documentos"    icon="📄" label="Documentos IA" />
-          <NavItem to="/advogado/financeiro"    icon="💰" label="Financeiro" />
-          <NavItem to="/advogado/configuracoes" icon="⚙️" label="Configurações" />
+          <NavItem to="/advogado/dashboard"     icon="⬜" label={t('nav.dashboard')} />
+          <NavItem to="/advogado/fila"          icon="📋" label={t('nav.queue')}      badge={openCount} />
+          <NavItem to="/advogado/sla"           icon="⏱" label={t('nav.sla')}        badge={criticalCount} urgent />
+          <NavItem to="/advogado/clientes"      icon="👤" label={t('nav.clients')}    badge={dashboard?.activeClientCount} />
+          <NavItem to="/advogado/documentos"    icon="📄" label={t('nav.documents')} />
+          <NavItem to="/advogado/financeiro"    icon="💰" label={t('nav.financial')} />
+          <NavItem to="/advogado/configuracoes" icon="⚙️" label={t('nav.settings')} />
         </nav>
 
-        {/* Sign out */}
-        <div className="p-3 border-t border-[#E5E5EA]">
+        {/* Language + Sign out */}
+        <div className="p-3 border-t border-[#E5E5EA] space-y-1">
+          <LanguageSwitcher />
           <button
             onClick={() => { signOut(); navigate('/login') }}
             className="w-full text-left px-3 py-2 text-xs text-[#86868B] hover:text-[#FF3B30] transition-colors rounded-[8px] hover:bg-[#FFF1F2]"
           >
-            Sair da conta
+            {t('nav.logout')}
           </button>
         </div>
       </aside>

@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "overview": "Overview",
+    "platform": "Platform",
+    "lawyers": "Lawyers",
+    "clients": "Clients",
+    "financial": "Financial",
+    "affiliates": "Affiliates",
+    "logs": "Logs"
+  },
+  "overview": {
+    "title": "Platform Overview",
+    "updated_at": "Updated at",
+    "stats": {
+      "active_companies": "Active companies",
+      "active_lawyers": "Active lawyers",
+      "open_consultations": "Open consultations",
+      "total_documents": "Total documents",
+      "critical_slas": "Critical SLAs"
+    },
+    "sla_map": "SLA Health Map",
+    "health": {
+      "ok": "Ok",
+      "warning": "Warning",
+      "critical": "Critical"
+    },
+    "no_consultations": "No open consultations"
+  }
+}

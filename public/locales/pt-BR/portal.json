@@ -1,0 +1,68 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "consultations": "Consultas",
+    "documents": "Documentos",
+    "affiliates": "Afiliados",
+    "financial": "Financeiro",
+    "settings": "Configurações",
+    "logout": "Sair da conta",
+    "upgrade_plan": "Atualize seu plano",
+    "upgrade_desc": "SLA 4h, consultas ilimitadas, suporte prioritário"
+  },
+  "dashboard": {
+    "open_consultations": "Consultas abertas",
+    "recent_documents": "Documentos recentes",
+    "assigned_lawyer": "Advogado designado",
+    "next_due": "Próximo vencimento",
+    "no_consultations": "Nenhuma consulta aberta",
+    "no_consultations_sub": "Que bom sinal! Tudo em dia.",
+    "clients_consultations": "Clientes & Consultas",
+    "recent_docs": "Documentos Recentes"
+  },
+  "consultations": {
+    "title": "Consultas",
+    "new": "Nova consulta",
+    "status": {
+      "all": "Todas",
+      "waiting": "Aguardando",
+      "in_progress": "Em andamento",
+      "done": "Concluídas",
+      "archived": "Arquivadas"
+    },
+    "fields": {
+      "title_label": "Título da consulta",
+      "legal_area": "Área jurídica"
+    },
+    "sent": "Consulta enviada!",
+    "search_lawyer": "Encontrar advogado",
+    "filter": {
+      "country": "País",
+      "state": "Estado / Província",
+      "city": "Cidade",
+      "specialty": "Especialidade",
+      "search": "Buscar advogados"
+    }
+  },
+  "financial": {
+    "title": "Financeiro",
+    "active_plan": "Plano ativo",
+    "active": "Ativo",
+    "no_subscription": "Sem assinatura",
+    "start": "Início",
+    "next_renewal": "Próxima renovação",
+    "days_remaining": "Dias restantes",
+    "upgrade_to": "Faça upgrade para...",
+    "view_plans": "Ver planos",
+    "payment_history": "Histórico de pagamentos",
+    "invoices_note": "Faturas emitidas pelo processador de pagamento.",
+    "per_month": "/mês"
+  },
+  "documents": {
+    "title": "Documentos"
+  },
+  "affiliates": {
+    "title": "Afiliados",
+    "pending_payout": "Saldo pendente"
+  }
+}

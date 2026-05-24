@@ -1,0 +1,64 @@
+{
+  "app": { "name": "JurisFlow" },
+  "nav": {
+    "dashboard": "Dashboard",
+    "logout": "Sair da conta",
+    "settings": "Configurações"
+  },
+  "actions": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "back": "← Voltar",
+    "send": "Enviar",
+    "close": "Fechar",
+    "confirm": "Confirmar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "loading": "Carregando...",
+    "upgrade": "Fazer upgrade →"
+  },
+  "status": {
+    "active": "Ativo",
+    "inactive": "Inativo",
+    "pending": "Pendente",
+    "approved": "Aprovado",
+    "rejected": "Rejeitado",
+    "processing": "Processando",
+    "paid": "Pago",
+    "failed": "Falhou",
+    "cancelled": "Cancelado",
+    "suspended": "Suspenso"
+  },
+  "legal_areas": {
+    "trabalhista": "Trabalhista",
+    "tributario": "Tributário",
+    "contratos": "Contratos",
+    "societario": "Societário",
+    "imobiliario": "Imobiliário",
+    "consumidor": "Consumidor",
+    "ambiental": "Ambiental",
+    "lgpd": "LGPD"
+  },
+  "plans": {
+    "essencial": "Essencial",
+    "profissional": "Profissional",
+    "empresarial": "Empresarial",
+    "basico": "Básico",
+    "completo": "Completo"
+  },
+  "errors": {
+    "generic": "Algo deu errado. Tente novamente.",
+    "required": "Campo obrigatório",
+    "email_invalid": "E-mail inválido",
+    "password_short": "Senha muito curta"
+  },
+  "per_month": "/mês",
+  "language": {
+    "label": "Idioma",
+    "pt-BR": "Português",
+    "en": "English",
+    "es": "Español"
+  }
+}

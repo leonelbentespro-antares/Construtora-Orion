@@ -1,10 +1,12 @@
 import React from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Badge, PlanBadge } from '../../components/ui/Badge'
 import { Button } from '../../components/ui/Button'
 import { useAuth } from '../../context/AuthContext'
 import { useClientDashboard } from '../../hooks/useDashboard'
 import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
+import { LanguageSwitcher } from '../../components/ui/LanguageSwitcher'
 
 interface NavItemProps {
   to:     string
@@ -39,6 +41,7 @@ export const ClientLayout: React.FC = () => {
   const { profile, company, signOut } = useAuth()
   const { data: dashboard }           = useClientDashboard()
   const navigate                      = useNavigate()
+  const { t }                         = useTranslation('portal')
 
   const planKey    = (dashboard?.subscription as any)?.plan?.key ?? (dashboard?.subscription as any)?.plan_key ?? 'essencial'
   const initials   = (company?.company_name ?? profile?.full_name ?? '??')
@@ -73,32 +76,35 @@ export const ClientLayout: React.FC = () => {
 
         {/* Nav */}
         <nav className="flex-1 p-3 space-y-0.5">
-          <NavItem to="/portal/dashboard"     icon="⬜" label="Dashboard" />
-          <NavItem to="/portal/consultas"     icon="💬" label="Consultas"  badge={openCount} />
-          <NavItem to="/portal/documentos"    icon="📄" label="Documentos" badge={docCount > 0 ? docCount : undefined} />
-          {!company && <NavItem to="/portal/afiliados" icon="🤝" label="Afiliados" />}
-          <NavItem to="/portal/financeiro"    icon="💳" label="Financeiro" />
-          <NavItem to="/portal/configuracoes" icon="⚙️" label="Configurações" />
+          <NavItem to="/portal/dashboard"     icon="⬜" label={t('nav.dashboard')} />
+          <NavItem to="/portal/consultas"     icon="💬" label={t('nav.consultations')} badge={openCount} />
+          <NavItem to="/portal/documentos"    icon="📄" label={t('nav.documents')}     badge={docCount > 0 ? docCount : undefined} />
+          {!company && <NavItem to="/portal/afiliados" icon="🤝" label={t('nav.affiliates')} />}
+          <NavItem to="/portal/financeiro"    icon="💳" label={t('nav.financial')} />
+          <NavItem to="/portal/configuracoes" icon="⚙️" label={t('nav.settings')} />
         </nav>
 
         {/* Upgrade CTA */}
         {planKey === 'essencial' && (
           <div className="p-4 border-t border-[#E5E5EA]">
             <div className="bg-[#EFF6FF] rounded-[10px] p-3">
-              <p className="text-xs font-medium text-[#1D4ED8] mb-2">Atualize seu plano</p>
-              <p className="text-xs text-[#6E6E73] mb-2">SLA 4h, consultas ilimitadas, suporte prioritário</p>
-              <Button variant="primary" size="sm" fullWidth onClick={() => navigate('/portal/financeiro')}>Fazer upgrade →</Button>
+              <p className="text-xs font-medium text-[#1D4ED8] mb-2">{t('nav.upgrade_plan')}</p>
+              <p className="text-xs text-[#6E6E73] mb-2">{t('nav.upgrade_desc')}</p>
+              <Button variant="primary" size="sm" fullWidth onClick={() => navigate('/portal/financeiro')}>
+                {t('nav.upgrade_plan')} →
+              </Button>
             </div>
           </div>
         )}
 
-        {/* Sign out */}
-        <div className="p-3 border-t border-[#E5E5EA]">
+        {/* Language + Sign out */}
+        <div className="p-3 border-t border-[#E5E5EA] space-y-1">
+          <LanguageSwitcher />
           <button
             onClick={() => { signOut(); navigate('/login') }}
             className="w-full text-left px-3 py-2 text-xs text-[#86868B] hover:text-[#FF3B30] transition-colors rounded-[8px] hover:bg-[#FFF1F2]"
           >
-            Sair da conta
+            {t('nav.logout')}
           </button>
         </div>
       </aside>

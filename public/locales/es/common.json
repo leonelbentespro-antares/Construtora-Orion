@@ -1,0 +1,64 @@
+{
+  "app": { "name": "JurisFlow" },
+  "nav": {
+    "dashboard": "Panel",
+    "logout": "Cerrar sesión",
+    "settings": "Configuración"
+  },
+  "actions": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "back": "← Volver",
+    "send": "Enviar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "loading": "Cargando...",
+    "upgrade": "Actualizar plan →"
+  },
+  "status": {
+    "active": "Activo",
+    "inactive": "Inactivo",
+    "pending": "Pendiente",
+    "approved": "Aprobado",
+    "rejected": "Rechazado",
+    "processing": "Procesando",
+    "paid": "Pagado",
+    "failed": "Fallido",
+    "cancelled": "Cancelado",
+    "suspended": "Suspendido"
+  },
+  "legal_areas": {
+    "trabalhista": "Derecho Laboral",
+    "tributario": "Derecho Tributario",
+    "contratos": "Contratos",
+    "societario": "Derecho Societario",
+    "imobiliario": "Derecho Inmobiliario",
+    "consumidor": "Defensa del Consumidor",
+    "ambiental": "Derecho Ambiental",
+    "lgpd": "Protección de Datos"
+  },
+  "plans": {
+    "essencial": "Esencial",
+    "profissional": "Profesional",
+    "empresarial": "Empresarial",
+    "basico": "Básico",
+    "completo": "Completo"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Inténtalo de nuevo.",
+    "required": "Campo obligatorio",
+    "email_invalid": "Email inválido",
+    "password_short": "Contraseña muy corta"
+  },
+  "per_month": "/mes",
+  "language": {
+    "label": "Idioma",
+    "pt-BR": "Português",
+    "en": "English",
+    "es": "Español"
+  }
+}

@@ -2,18 +2,13 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
+import { LanguageSwitcher } from '../../components/ui/LanguageSwitcher'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
-
-const schema = z.object({
-  email:    z.string().email('E-mail inválido'),
-  password: z.string().min(6, 'Senha muito curta'),
-})
-
-type FormData = z.infer<typeof schema>
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
@@ -25,6 +20,8 @@ const GoogleIcon = () => (
 )
 
 export const LoginPage: React.FC = () => {
+  const { t }                         = useTranslation('auth')
+  const { t: tCommon }                = useTranslation('common')
   const [loading,     setLoading]     = useState(false)
   const [resetLoading,setResetLoading]= useState(false)
   const [apiError,    setApiError]    = useState('')
@@ -33,6 +30,12 @@ export const LoginPage: React.FC = () => {
   const [resetSent,   setResetSent]   = useState(false)
   const { signIn }                    = useAuth()
   const navigate                      = useNavigate()
+
+  const schema = z.object({
+    email:    z.string().email(tCommon('errors.email_invalid')),
+    password: z.string().min(6, tCommon('errors.password_short')),
+  })
+  type FormData = z.infer<typeof schema>
 
   const {
     register,
@@ -48,7 +51,7 @@ export const LoginPage: React.FC = () => {
     setLoading(false)
 
     if (error) {
-      setApiError('E-mail ou senha incorretos.')
+      setApiError(t('login.error_credentials'))
       return
     }
 
@@ -69,31 +72,29 @@ export const LoginPage: React.FC = () => {
 
   if (showReset) {
     return (
-      <AuthLayout title="Redefinir senha">
+      <AuthLayout title={t('reset.title')}>
         {resetSent ? (
           <div className="text-center space-y-4">
             <div className="w-12 h-12 rounded-full bg-[#F0FDF4] flex items-center justify-center text-xl mx-auto">✓</div>
-            <p className="text-sm text-[#6E6E73]">
-              Se o e-mail estiver cadastrado, você receberá o link de redefinição em breve.
-            </p>
+            <p className="text-sm text-[#6E6E73]">{t('reset.success')}</p>
             <Button variant="primary" size="md" fullWidth onClick={() => { setShowReset(false); setResetSent(false) }}>
-              Voltar ao login
+              {t('reset.back_login')}
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
             <Input
-              label="E-mail cadastrado"
+              label={t('reset.email_label')}
               type="email"
-              placeholder="voce@empresa.com.br"
+              placeholder={t('login.placeholder_email')}
               value={resetEmail}
               onChange={(e) => setResetEmail(e.target.value)}
             />
             <Button variant="primary" size="lg" fullWidth loading={resetLoading} onClick={handleReset}>
-              Enviar link de redefinição
+              {t('reset.submit')}
             </Button>
             <Button variant="ghost" size="md" fullWidth onClick={() => setShowReset(false)}>
-              ← Voltar
+              {t('reset.back')}
             </Button>
           </div>
         )}
@@ -102,19 +103,19 @@ export const LoginPage: React.FC = () => {
   }
 
   return (
-    <AuthLayout title="Bem-vindo de volta">
+    <AuthLayout title={t('login.title')}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
         <Input
-          label="E-mail"
+          label={t('login.email')}
           type="email"
-          placeholder="voce@empresa.com.br"
+          placeholder={t('login.placeholder_email')}
           error={errors.email?.message}
           {...register('email')}
         />
         <Input
-          label="Senha"
+          label={t('login.password')}
           type="password"
-          placeholder="••••••••"
+          placeholder={t('login.placeholder_password')}
           error={errors.password?.message}
           {...register('password')}
         />
@@ -131,17 +132,17 @@ export const LoginPage: React.FC = () => {
             onClick={() => { setResetEmail(getValues('email') ?? ''); setShowReset(true) }}
             className="text-sm text-[#2563EB] hover:text-[#1D4ED8] transition-colors"
           >
-            Esqueci minha senha
+            {t('login.forgot')}
           </button>
         </div>
 
         <Button variant="primary" size="lg" fullWidth loading={loading} type="submit">
-          Entrar
+          {t('login.submit')}
         </Button>
 
         <div className="flex items-center gap-3 my-2">
           <div className="flex-1 h-px bg-[#E5E5EA]" />
-          <span className="text-xs text-[#86868B]">ou continue com</span>
+          <span className="text-xs text-[#86868B]">{t('login.or_continue')}</span>
           <div className="flex-1 h-px bg-[#E5E5EA]" />
         </div>
 
@@ -159,11 +160,15 @@ export const LoginPage: React.FC = () => {
         </Button>
 
         <p className="text-sm text-center text-[#6E6E73]">
-          Não tem conta?{' '}
+          {t('login.no_account')}{' '}
           <a href="/cadastro" className="text-[#2563EB] hover:text-[#1D4ED8] font-medium">
-            Criar conta grátis
+            {t('login.create_free')}
           </a>
         </p>
+
+        <div className="flex justify-center pt-1">
+          <LanguageSwitcher />
+        </div>
       </form>
     </AuthLayout>
   )

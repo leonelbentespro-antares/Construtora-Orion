@@ -1,0 +1,64 @@
+{
+  "app": { "name": "JurisFlow" },
+  "nav": {
+    "dashboard": "Dashboard",
+    "logout": "Sign out",
+    "settings": "Settings"
+  },
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "← Back",
+    "send": "Send",
+    "close": "Close",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "loading": "Loading...",
+    "upgrade": "Upgrade →"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "processing": "Processing",
+    "paid": "Paid",
+    "failed": "Failed",
+    "cancelled": "Cancelled",
+    "suspended": "Suspended"
+  },
+  "legal_areas": {
+    "trabalhista": "Labor Law",
+    "tributario": "Tax Law",
+    "contratos": "Contracts",
+    "societario": "Corporate Law",
+    "imobiliario": "Real Estate",
+    "consumidor": "Consumer Law",
+    "ambiental": "Environmental Law",
+    "lgpd": "Data Privacy"
+  },
+  "plans": {
+    "essencial": "Essential",
+    "profissional": "Professional",
+    "empresarial": "Enterprise",
+    "basico": "Basic",
+    "completo": "Complete"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "required": "Required field",
+    "email_invalid": "Invalid email",
+    "password_short": "Password too short"
+  },
+  "per_month": "/month",
+  "language": {
+    "label": "Language",
+    "pt-BR": "Português",
+    "en": "English",
+    "es": "Español"
+  }
+}

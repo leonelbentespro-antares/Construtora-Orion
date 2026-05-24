@@ -1,27 +1,30 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Card, CardHeader, CardTitle } from '../../components/ui/Card'
 import { Badge } from '../../components/ui/Badge'
 import { StarRating } from '../../components/ui/StarRating'
 import { variants } from '../../lib/motion'
 import { useAdminStats, useAdminLawyerRanking } from '../../hooks/useFinanceiro'
 import { getSLAStatus } from '../../lib/sla'
+import { formatDateTime } from '../../lib/i18n/format'
 
 export const AdminOverview: React.FC = () => {
-  const { data, isLoading }        = useAdminStats()
-  const { data: ranking = [] }     = useAdminLawyerRanking()
+  const { data, isLoading }    = useAdminStats()
+  const { data: ranking = [] } = useAdminLawyerRanking()
+  const { t }                  = useTranslation('admin')
 
-  const slaData    = data?.slaData ?? []
-  const critical   = slaData.filter((c: any) => getSLAStatus(new Date(c.sla_deadline)) === 'critical')
-  const warning    = slaData.filter((c: any) => getSLAStatus(new Date(c.sla_deadline)) === 'warning')
-  const ok         = slaData.filter((c: any) => getSLAStatus(new Date(c.sla_deadline)) === 'ok')
+  const slaData  = data?.slaData ?? []
+  const critical = slaData.filter((c: any) => getSLAStatus(new Date(c.sla_deadline)) === 'critical')
+  const warning  = slaData.filter((c: any) => getSLAStatus(new Date(c.sla_deadline)) === 'warning')
+  const ok       = slaData.filter((c: any) => getSLAStatus(new Date(c.sla_deadline)) === 'ok')
 
   const stats = [
-    { label: 'Empresas ativas',   value: String(data?.companies         ?? '—'), delta: '',      positive: true  },
-    { label: 'Advogados ativos',  value: String(data?.lawyers           ?? '—'), delta: '',      positive: true  },
-    { label: 'Consultas abertas', value: String(data?.openConsultations ?? '—'), delta: '',      positive: false },
-    { label: 'Documentos total',  value: String(data?.docsTotal         ?? '—'), delta: '',      positive: true  },
-    { label: 'SLAs críticos',     value: String(critical.length),                delta: '',      positive: critical.length === 0 },
+    { key: 'active_companies',   value: String(data?.companies         ?? '—') },
+    { key: 'active_lawyers',     value: String(data?.lawyers           ?? '—') },
+    { key: 'open_consultations', value: String(data?.openConsultations ?? '—') },
+    { key: 'total_documents',    value: String(data?.docsTotal         ?? '—') },
+    { key: 'critical_slas',      value: String(critical.length)                },
   ]
 
   return (
@@ -32,10 +35,8 @@ export const AdminOverview: React.FC = () => {
       className="space-y-6"
     >
       <motion.div variants={variants.fadeUp}>
-        <h1 className="text-2xl font-semibold text-[#1D1D1F] tracking-tight">Platform Overview</h1>
-        <p className="text-sm text-[#86868B] mt-0.5">
-          {new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' })}
-        </p>
+        <h1 className="text-2xl font-semibold text-[#1D1D1F] tracking-tight">{t('overview.title')}</h1>
+        <p className="text-sm text-[#86868B] mt-0.5">{formatDateTime(new Date())}</p>
       </motion.div>
 
       {/* Stats */}
@@ -45,15 +46,12 @@ export const AdminOverview: React.FC = () => {
               <div key={i} className="h-20 rounded-[14px] bg-[#F5F5F7] animate-pulse" />
             ))
           : stats.map((s) => (
-              <motion.div key={s.label} variants={variants.cardEnter}>
+              <motion.div key={s.key} variants={variants.cardEnter}>
                 <Card variant="default" padding="md">
-                  <p className="text-xs text-[#86868B] mb-1.5">{s.label}</p>
+                  <p className="text-xs text-[#86868B] mb-1.5">
+                    {t(`overview.stats.${s.key}` as any)}
+                  </p>
                   <p className="text-xl font-semibold text-[#1D1D1F]">{s.value}</p>
-                  {s.delta && (
-                    <p className={`text-xs mt-1 font-medium ${s.positive ? 'text-[#15803D]' : 'text-[#DC2626]'}`}>
-                      {s.delta}
-                    </p>
-                  )}
                 </Card>
               </motion.div>
             ))}
@@ -64,16 +62,16 @@ export const AdminOverview: React.FC = () => {
         <motion.div variants={variants.fadeUp}>
           <Card variant="default" padding="md">
             <CardHeader>
-              <CardTitle>SLA Health Map</CardTitle>
+              <CardTitle>{t('overview.sla_map')}</CardTitle>
               <div className="flex gap-2">
                 <span className="text-xs text-[#86868B] flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-[#34C759] inline-block" />Ok
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#34C759] inline-block" />{t('overview.health.ok')}
                 </span>
                 <span className="text-xs text-[#86868B] flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-[#F59E0B] inline-block" />Atenção
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#F59E0B] inline-block" />{t('overview.health.warning')}
                 </span>
                 <span className="text-xs text-[#86868B] flex items-center gap-1">
-                  <span className="w-2.5 h-2.5 rounded-sm bg-[#DC2626] inline-block" />Crítico
+                  <span className="w-2.5 h-2.5 rounded-sm bg-[#DC2626] inline-block" />{t('overview.health.critical')}
                 </span>
               </div>
             </CardHeader>
@@ -83,7 +81,7 @@ export const AdminOverview: React.FC = () => {
             ) : slaData.length === 0 ? (
               <div className="text-center py-6 text-[#86868B]">
                 <p className="text-xl">✅</p>
-                <p className="text-sm mt-1">Nenhuma consulta aberta</p>
+                <p className="text-sm mt-1">{t('overview.no_consultations')}</p>
               </div>
             ) : (
               <>
@@ -103,7 +101,7 @@ export const AdminOverview: React.FC = () => {
                   ))}
                 </div>
                 <p className="text-xs text-[#86868B] mt-3">
-                  {slaData.length} consultas · {critical.length} críticas · {warning.length} atenção
+                  {slaData.length} · {critical.length} {t('overview.health.critical').toLowerCase()} · {warning.length} {t('overview.health.warning').toLowerCase()}
                 </p>
               </>
             )}
@@ -114,12 +112,11 @@ export const AdminOverview: React.FC = () => {
         <motion.div variants={variants.fadeUp}>
           <Card variant="default" padding="none">
             <div className="p-5 border-b border-[#E5E5EA]">
-              <CardTitle>Ranking de advogados</CardTitle>
+              <CardTitle>Ranking</CardTitle>
             </div>
             {ranking.length === 0 ? (
               <div className="p-8 text-center text-[#86868B]">
                 <p className="text-2xl mb-2">⭐</p>
-                <p className="text-sm">Nenhuma avaliação ainda.</p>
               </div>
             ) : (
               <div className="divide-y divide-[#F5F5F7]">
@@ -139,51 +136,19 @@ export const AdminOverview: React.FC = () => {
                         {l.profile?.full_name ?? '—'}
                       </p>
                       <p className="text-xs text-[#86868B]">
-                        OAB/{l.oab_state} {l.oab_number}
+                        {l.oab_state && l.oab_number
+                          ? `OAB/${l.oab_state} ${l.oab_number}`
+                          : l.bar_association ?? '—'}
                       </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <StarRating value={l.avg_rating} size="sm" showValue />
-                      <Badge variant="gray" size="sm">{l.review_count} av.</Badge>
+                      <Badge variant="gray" size="sm">{l.review_count}</Badge>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-          </Card>
-        </motion.div>
-
-        {/* Summary */}
-        <motion.div variants={variants.fadeUp}>
-          <Card variant="default" padding="md">
-            <CardHeader>
-              <CardTitle>Resumo da plataforma</CardTitle>
-            </CardHeader>
-            <div className="space-y-4 mt-2">
-              <div className="flex items-center justify-between py-2 border-b border-[#F5F5F7]">
-                <p className="text-sm text-[#1D1D1F]">Empresas cadastradas</p>
-                <p className="text-sm font-semibold text-[#1D1D1F]">{data?.companies ?? '—'}</p>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-[#F5F5F7]">
-                <p className="text-sm text-[#1D1D1F]">Advogados aprovados</p>
-                <p className="text-sm font-semibold text-[#1D1D1F]">{data?.lawyers ?? '—'}</p>
-              </div>
-              <div className="flex items-center justify-between py-2 border-b border-[#F5F5F7]">
-                <p className="text-sm text-[#1D1D1F]">Consultas em aberto</p>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-semibold text-[#1D1D1F]">{data?.openConsultations ?? '—'}</p>
-                  {(data?.openConsultations ?? 0) > 0 && (
-                    <Badge variant={critical.length > 0 ? 'red' : 'amber'} size="sm" dot>
-                      {critical.length > 0 ? `${critical.length} críticas` : 'Em dia'}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center justify-between py-2">
-                <p className="text-sm text-[#1D1D1F]">Documentos gerados</p>
-                <p className="text-sm font-semibold text-[#1D1D1F]">{data?.docsTotal ?? '—'}</p>
-              </div>
-            </div>
           </Card>
         </motion.div>
       </div>

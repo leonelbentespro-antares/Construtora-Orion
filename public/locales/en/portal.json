@@ -1,0 +1,68 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "consultations": "Consultations",
+    "documents": "Documents",
+    "affiliates": "Affiliates",
+    "financial": "Financial",
+    "settings": "Settings",
+    "logout": "Sign out",
+    "upgrade_plan": "Upgrade your plan",
+    "upgrade_desc": "4h SLA, unlimited consultations, priority support"
+  },
+  "dashboard": {
+    "open_consultations": "Open consultations",
+    "recent_documents": "Recent documents",
+    "assigned_lawyer": "Assigned lawyer",
+    "next_due": "Next due date",
+    "no_consultations": "No open consultations",
+    "no_consultations_sub": "Great sign! Everything is up to date.",
+    "clients_consultations": "Clients & Consultations",
+    "recent_docs": "Recent Documents"
+  },
+  "consultations": {
+    "title": "Consultations",
+    "new": "New consultation",
+    "status": {
+      "all": "All",
+      "waiting": "Waiting",
+      "in_progress": "In progress",
+      "done": "Completed",
+      "archived": "Archived"
+    },
+    "fields": {
+      "title_label": "Consultation title",
+      "legal_area": "Legal area"
+    },
+    "sent": "Consultation submitted!",
+    "search_lawyer": "Find a lawyer",
+    "filter": {
+      "country": "Country",
+      "state": "State / Province",
+      "city": "City",
+      "specialty": "Specialty",
+      "search": "Search lawyers"
+    }
+  },
+  "financial": {
+    "title": "Financial",
+    "active_plan": "Active plan",
+    "active": "Active",
+    "no_subscription": "No subscription",
+    "start": "Start date",
+    "next_renewal": "Next renewal",
+    "days_remaining": "Days remaining",
+    "upgrade_to": "Upgrade to...",
+    "view_plans": "View plans",
+    "payment_history": "Payment history",
+    "invoices_note": "Invoices issued by the payment processor.",
+    "per_month": "/month"
+  },
+  "documents": {
+    "title": "Documents"
+  },
+  "affiliates": {
+    "title": "Affiliates",
+    "pending_payout": "Pending balance"
+  }
+}

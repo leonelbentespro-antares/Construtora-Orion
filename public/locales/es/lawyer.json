@@ -1,0 +1,51 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "queue": "Cola de consultas",
+    "sla": "Monitor SLA",
+    "clients": "Clientes",
+    "documents": "Documentos IA",
+    "financial": "Financiero",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión"
+  },
+  "financial": {
+    "title": "Financiero",
+    "month_estimate": "Estimado del mes",
+    "next_payout": "Próximo pago",
+    "payout_day": "Día 10",
+    "confirmed": "Confirmado",
+    "no_pending": "Sin pago pendiente",
+    "last_payout": "Último pago",
+    "no_payout": "Ningún pago recibido aún",
+    "history_title": "Historial de pagos",
+    "history_detail": "Historial detallado",
+    "no_history": "Ningún pago registrado aún.",
+    "via_pix": "vía PIX",
+    "base": "Base",
+    "share": "Participación",
+    "status": {
+      "pending": "Pendiente",
+      "approved": "Aprobado",
+      "processing": "Procesando",
+      "paid": "Pagado",
+      "failed": "Fallido"
+    }
+  },
+  "clients": {
+    "title": "Clientes",
+    "active_count_one": "{{count}} cliente activo",
+    "active_count_other": "{{count}} clientes activos",
+    "none": "Ningún cliente asignado aún.",
+    "renewal": "Renovación"
+  },
+  "documents": {
+    "title": "Documentos IA"
+  },
+  "queue": {
+    "title": "Cola de consultas"
+  },
+  "sla": {
+    "title": "Monitor SLA"
+  }
+}

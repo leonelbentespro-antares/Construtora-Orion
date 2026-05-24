@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "overview": "Visão geral",
+    "platform": "Plataforma",
+    "lawyers": "Advogados",
+    "clients": "Clientes",
+    "financial": "Financeiro",
+    "affiliates": "Afiliados",
+    "logs": "Logs"
+  },
+  "overview": {
+    "title": "Platform Overview",
+    "updated_at": "Atualizado em",
+    "stats": {
+      "active_companies": "Empresas ativas",
+      "active_lawyers": "Advogados ativos",
+      "open_consultations": "Consultas abertas",
+      "total_documents": "Documentos total",
+      "critical_slas": "SLAs críticos"
+    },
+    "sla_map": "SLA Health Map",
+    "health": {
+      "ok": "Ok",
+      "warning": "Atenção",
+      "critical": "Crítico"
+    },
+    "no_consultations": "Nenhuma consulta aberta"
+  }
+}

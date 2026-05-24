@@ -1,0 +1,29 @@
+{
+  "nav": {
+    "overview": "Resumen",
+    "platform": "Plataforma",
+    "lawyers": "Abogados",
+    "clients": "Clientes",
+    "financial": "Financiero",
+    "affiliates": "Afiliados",
+    "logs": "Registros"
+  },
+  "overview": {
+    "title": "Resumen de la Plataforma",
+    "updated_at": "Actualizado el",
+    "stats": {
+      "active_companies": "Empresas activas",
+      "active_lawyers": "Abogados activos",
+      "open_consultations": "Consultas abiertas",
+      "total_documents": "Documentos totales",
+      "critical_slas": "SLAs críticos"
+    },
+    "sla_map": "Mapa de Salud SLA",
+    "health": {
+      "ok": "Ok",
+      "warning": "Atención",
+      "critical": "Crítico"
+    },
+    "no_consultations": "Ninguna consulta abierta"
+  }
+}

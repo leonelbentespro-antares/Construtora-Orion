@@ -1,0 +1,68 @@
+{
+  "nav": {
+    "dashboard": "Panel",
+    "consultations": "Consultas",
+    "documents": "Documentos",
+    "affiliates": "Afiliados",
+    "financial": "Financiero",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "upgrade_plan": "Actualiza tu plan",
+    "upgrade_desc": "SLA 4h, consultas ilimitadas, soporte prioritario"
+  },
+  "dashboard": {
+    "open_consultations": "Consultas abiertas",
+    "recent_documents": "Documentos recientes",
+    "assigned_lawyer": "Abogado asignado",
+    "next_due": "Próximo vencimiento",
+    "no_consultations": "Ninguna consulta abierta",
+    "no_consultations_sub": "¡Buena señal! Todo al día.",
+    "clients_consultations": "Clientes y Consultas",
+    "recent_docs": "Documentos Recientes"
+  },
+  "consultations": {
+    "title": "Consultas",
+    "new": "Nueva consulta",
+    "status": {
+      "all": "Todas",
+      "waiting": "En espera",
+      "in_progress": "En curso",
+      "done": "Completadas",
+      "archived": "Archivadas"
+    },
+    "fields": {
+      "title_label": "Título de la consulta",
+      "legal_area": "Área jurídica"
+    },
+    "sent": "¡Consulta enviada!",
+    "search_lawyer": "Encontrar abogado",
+    "filter": {
+      "country": "País",
+      "state": "Estado / Provincia",
+      "city": "Ciudad",
+      "specialty": "Especialidad",
+      "search": "Buscar abogados"
+    }
+  },
+  "financial": {
+    "title": "Financiero",
+    "active_plan": "Plan activo",
+    "active": "Activo",
+    "no_subscription": "Sin suscripción",
+    "start": "Inicio",
+    "next_renewal": "Próxima renovación",
+    "days_remaining": "Días restantes",
+    "upgrade_to": "Actualiza a...",
+    "view_plans": "Ver planes",
+    "payment_history": "Historial de pagos",
+    "invoices_note": "Facturas emitidas por el procesador de pagos.",
+    "per_month": "/mes"
+  },
+  "documents": {
+    "title": "Documentos"
+  },
+  "affiliates": {
+    "title": "Afiliados",
+    "pending_payout": "Saldo pendiente"
+  }
+}

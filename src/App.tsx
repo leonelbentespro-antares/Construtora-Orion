@@ -39,7 +39,6 @@ const Layout      = React.lazy(() => import('./components/Layout').then(m => ({ 
 const Dashboard   = React.lazy(() => import('./features/dashboard/Dashboard').then(m => ({ default: m.Dashboard })))
 const CRM         = React.lazy(() => import('./features/crm/CRM').then(m => ({ default: m.CRM })))
 const Construction = React.lazy(() => import('./features/construction/Construction').then(m => ({ default: m.Construction })))
-const Chat        = React.lazy(() => import('./features/chat/Chat').then(m => ({ default: m.Chat })))
 const Agenda      = React.lazy(() => import('./features/agenda/Agenda').then(m => ({ default: m.Agenda })))
 const SettingsView = React.lazy(() => import('./features/settings/SettingsView').then(m => ({ default: m.SettingsView })))
 
@@ -123,7 +122,6 @@ function AppRoutes() {
           <Route index      element={<Dashboard />} />
           <Route path="crm"      element={<CRM />} />
           <Route path="obras"    element={<Construction />} />
-          <Route path="chat"     element={<Chat />} />
           <Route path="agenda"   element={<Agenda />} />
           <Route path="settings" element={<SettingsView />} />
         </Route>

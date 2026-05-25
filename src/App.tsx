@@ -72,9 +72,19 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   return user ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+function AffiliateTracker() {
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const ref = params.get('ref')
+    if (ref) localStorage.setItem('jf_affiliate_ref', ref)
+  }, [])
+  return null
+}
+
 function AppRoutes() {
   return (
     <Suspense fallback={<PageSpinner />}>
+      <AffiliateTracker />
       <Routes>
         {/* JurisFlow public */}
         <Route path="/jurisflow" element={<Landing />} />

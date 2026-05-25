@@ -1,6 +1,9 @@
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
 
 export type UserRole           = 'client' | 'lawyer' | 'admin'
+export type ClientType         = 'individual' | 'company'
+export type PaymentStatus      = 'pending' | 'paid' | 'refunded' | 'failed'
+export type CommissionStatus   = 'pending' | 'approved' | 'paid' | 'rejected'
 export type PlanKey            = 'essencial' | 'profissional' | 'empresarial'
 export type SubscriptionStatus = 'active' | 'inactive' | 'overdue' | 'cancelled' | 'trialing'
 export type ConsultationStatus = 'aguardando' | 'em_andamento' | 'concluida' | 'arquivada'
@@ -11,16 +14,59 @@ export type LawyerStatus       = 'pending' | 'active' | 'suspended' | 'rejected'
 export type LegalArea          = 'trabalhista' | 'tributario' | 'contratos' | 'societario' | 'imobiliario' | 'consumidor' | 'ambiental' | 'lgpd'
 
 export interface Profile {
-  id:         string
-  role:       UserRole
-  full_name:  string | null
-  email:      string
-  phone:      string | null
-  avatar_url: string | null
-  country:    string
-  language:   string
-  created_at: string
-  updated_at: string
+  id:                     string
+  role:                   UserRole
+  full_name:              string | null
+  email:                  string
+  phone:                  string | null
+  avatar_url:             string | null
+  country:                string
+  language:               string
+  has_paid_consultation:  boolean
+  client_type:            ClientType
+  referred_by_affiliate:  string | null
+  created_at:             string
+  updated_at:             string
+}
+
+export interface ConsultationPayment {
+  id:                         string
+  profile_id:                 string
+  amount:                     number
+  client_type:                ClientType
+  status:                     PaymentStatus
+  stripe_payment_intent_id:   string | null
+  stripe_checkout_session_id: string | null
+  referred_by_affiliate:      string | null
+  created_at:                 string
+  paid_at:                    string | null
+}
+
+export interface Affiliate {
+  id:                string
+  user_id:           string
+  code:              string
+  client_type:       ClientType
+  status:            string
+  balance:           number
+  total_referrals:   number
+  total_conversions: number
+  joined_at:         string
+  created_at:        string
+}
+
+export interface ReferralCommission {
+  id:                   string
+  affiliate_id:         string
+  payment_id:           string
+  converted_profile_id: string
+  amount_paid:          number
+  commission:           number
+  client_type:          ClientType
+  status:               CommissionStatus
+  approved_at:          string | null
+  paid_at:              string | null
+  created_at:           string
 }
 
 export interface Company {

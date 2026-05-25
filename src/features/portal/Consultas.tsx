@@ -12,6 +12,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getSLAStatus, getRemainingText } from '../../lib/sla'
 import { formatDateTime } from '../../lib/i18n/format'
 import type { ConsultationStatus, LegalArea } from '../../lib/database.types'
+import { ConsultationPaymentGate } from './ConsultationPaymentGate'
 
 const LEGAL_AREAS: LegalArea[] = [
   'trabalhista', 'tributario', 'contratos', 'societario',
@@ -213,6 +214,8 @@ export const Consultas: React.FC = () => {
           {t('consultations.new')}
         </Button>
       </motion.div>
+
+      <ConsultationPaymentGate />
 
       {/* Tabs */}
       <motion.div variants={variants.fadeUp} className="flex gap-1 bg-[#F5F5F7] p-1 rounded-[10px] w-fit">

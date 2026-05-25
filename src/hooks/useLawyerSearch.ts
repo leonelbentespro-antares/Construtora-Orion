@@ -3,10 +3,11 @@ import { supabase } from '../lib/supabase'
 import type { LegalArea } from '../lib/database.types'
 
 export interface LawyerSearchFilters {
-  country?:       string
+  country?:        string
   state_province?: string
-  city?:          string
-  specialty?:     LegalArea
+  city?:           string
+  specialty?:      LegalArea
+  priorityMode?:   boolean  // true for company clients — top-rated only, ordered by fastest response
 }
 
 export function useLawyerSearch(filters: LawyerSearchFilters) {
@@ -28,9 +29,16 @@ export function useLawyerSearch(filters: LawyerSearchFilters) {
       if (filters.city)           q = q.ilike('city', `%${filters.city}%`)
       if (filters.specialty)      q = q.contains('specialties', [filters.specialty])
 
-      q = q.order('rating', { ascending: false }).limit(50)
+      if (filters.priorityMode) {
+        q = q
+          .gte('rating', 4.5)
+          .order('avg_response_hours', { ascending: true })
+          .order('rating', { ascending: false })
+      } else {
+        q = q.order('rating', { ascending: false })
+      }
 
-      const { data, error } = await q
+      const { data, error } = await q.limit(50)
       if (error) throw error
       return data ?? []
     },

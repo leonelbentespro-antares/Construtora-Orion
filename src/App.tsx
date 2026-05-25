@@ -32,7 +32,8 @@ const LawyerConfiguracoes = React.lazy(() => import('./features/lawyer/Configura
 
 // Lazy-loaded pages — admin
 const AdminLayout   = React.lazy(() => import('./features/admin/AdminLayout').then(m => ({ default: m.AdminLayout })))
-const AdminOverview = React.lazy(() => import('./features/admin/AdminOverview').then(m => ({ default: m.AdminOverview })))
+const AdminOverview   = React.lazy(() => import('./features/admin/AdminOverview').then(m => ({ default: m.AdminOverview })))
+const AdminAfiliados  = React.lazy(() => import('./features/admin/AdminAfiliados').then(m => ({ default: m.AdminAfiliados })))
 
 // Lazy-loaded pages — legacy CRM
 const Layout      = React.lazy(() => import('./components/Layout').then(m => ({ default: m.Layout })))
@@ -123,7 +124,7 @@ function AppRoutes() {
           <Route path="advogados"          element={<AdminComingSoon title="Advogados" />} />
           <Route path="clientes"           element={<AdminComingSoon title="Clientes" />} />
           <Route path="financeiro"         element={<AdminComingSoon title="Financeiro" />} />
-          <Route path="afiliados"          element={<AdminComingSoon title="Afiliados" />} />
+          <Route path="afiliados"          element={<AdminAfiliados />} />
           <Route path="logs"               element={<AdminComingSoon title="Logs" />} />
         </Route>
 

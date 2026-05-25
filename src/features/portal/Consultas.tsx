@@ -44,11 +44,10 @@ const NewConsultationSlideOver: React.FC<{ open: boolean; onClose: () => void }>
     try {
       await openConsultation.mutateAsync({
         companyId:      company.id,
-        subscriptionId: subscriptionId,
+        subscriptionId: subscriptionId ?? undefined,
         legalArea:      area as LegalArea,
         title,
         description,
-        planKey:        'profissional',
       })
       setSubmitted(true)
     } catch (e: any) {

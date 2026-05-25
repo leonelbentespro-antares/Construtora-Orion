@@ -181,7 +181,12 @@ export const Fila: React.FC = () => {
                 >
                   <div className="flex items-center gap-4 cursor-pointer" onClick={() => setExpandedId(expanded ? null : c.id)}>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1D1D1F] truncate">{c.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-[#1D1D1F] truncate">{c.title}</p>
+                        {(c as any).client_type === 'company' && (
+                          <Badge variant="blue" size="sm">⚡ Prioritário</Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 mt-0.5">
                         <span className="text-xs text-[#6E6E73]">{client}</span>
                         <Badge variant="gray" size="sm">{AREA_LABELS[c.legal_area] ?? c.legal_area}</Badge>

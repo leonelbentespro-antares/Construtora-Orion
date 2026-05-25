@@ -76,33 +76,41 @@ export function useConsultation(id: string) {
   })
 }
 
+const SLA_BY_CLIENT: Record<string, number> = {
+  company:    4,
+  individual: 24,
+}
+
 interface OpenConsultationParams {
-  companyId:      string
-  subscriptionId: string
+  companyId?:     string
+  subscriptionId?: string
   legalArea:      LegalArea
   title:          string
   description:    string
-  planKey:        'essencial' | 'profissional' | 'empresarial'
+  clientType?:    'individual' | 'company'
 }
 
 export function useOpenConsultation() {
+  const { profile, company } = useAuth()
   const qc = useQueryClient()
 
   return useMutation({
     mutationFn: async (params: OpenConsultationParams) => {
-      const slaHours   = SLA_HOURS[params.planKey]
+      const clientType  = params.clientType ?? (company ? 'company' : 'individual')
+      const slaHours    = SLA_BY_CLIENT[clientType] ?? 24
       const slaDeadline = new Date(Date.now() + slaHours * 3600 * 1000).toISOString()
 
       const { data, error } = await supabase
         .schema('jurisflow')
         .from('consultations')
         .insert({
-          company_id:      params.companyId,
-          subscription_id: params.subscriptionId,
+          company_id:      params.companyId ?? company?.id,
+          subscription_id: params.subscriptionId ?? null,
           legal_area:      params.legalArea,
           title:           params.title,
           description:     params.description,
           sla_deadline:    slaDeadline,
+          client_type:     clientType,
           status:          'aguardando',
         })
         .select()

@@ -22,17 +22,17 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, badge }) => (
       [
         'flex items-center gap-2.5 h-9 px-3 rounded-[8px] text-sm font-medium transition-all duration-150 select-none',
         isActive
-          ? 'bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] text-[#1D1D1F]'
-          : 'text-[#6E6E73] hover:bg-white hover:text-[#1D1D1F]',
+          ? 'bg-[#2563EB] text-white shadow-[0_2px_8px_rgba(37,99,235,0.35)]'
+          : 'text-white/50 hover:bg-white/8 hover:text-white',
       ].join(' ')
     }
   >
     <span className="text-base w-4 shrink-0 text-center">{icon}</span>
     <span className="flex-1">{label}</span>
     {badge !== undefined && badge !== 0 && (
-      <Badge variant={typeof badge === 'number' && badge > 0 ? 'blue' : 'gray'} size="sm">
+      <span className="ml-auto min-w-[18px] h-[18px] px-1 rounded-full bg-[#2563EB]/30 text-white text-[10px] font-semibold flex items-center justify-center">
         {badge}
-      </Badge>
+      </span>
     )}
   </NavLink>
 )
@@ -51,24 +51,32 @@ export const ClientLayout: React.FC = () => {
   const docCount    = dashboard?.recentDocuments?.filter((d) => d.status === 'revisando').length ?? 0
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <aside className="w-60 shrink-0 bg-[#FAFAFA] border-r border-[#E5E5EA] flex flex-col">
+    <div className="flex min-h-screen bg-[#F5F5F7]">
+      <aside className="w-60 shrink-0 bg-[#0F172A] flex flex-col">
         {/* Logo */}
-        <div className="h-16 flex items-center px-5 border-b border-[#E5E5EA]">
+        <div className="h-16 flex items-center px-5 border-b border-white/8">
           <div className="flex items-center gap-1.5">
-            <span className="text-base font-semibold text-[#1D1D1F] tracking-tight">JurisFlow</span>
+            <span className="text-base font-semibold text-white tracking-tight">JurisFlow</span>
             <span className="w-1.5 h-1.5 rounded-full bg-[#2563EB] mt-0.5" aria-hidden="true" />
           </div>
         </div>
 
         {/* User info */}
-        <div className="px-4 py-4 border-b border-[#E5E5EA]">
+        <div className="px-4 py-4 border-b border-white/8">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#DBEAFE] flex items-center justify-center text-xs font-semibold text-[#1D4ED8] shrink-0">
-              {initials}
-            </div>
+            {profile?.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={displayName}
+                className="w-9 h-9 rounded-full object-cover shrink-0 ring-2 ring-[#2563EB]/40"
+              />
+            ) : (
+              <div className="w-9 h-9 rounded-full bg-[#2563EB]/20 flex items-center justify-center text-xs font-bold text-[#93C5FD] shrink-0 ring-2 ring-[#2563EB]/20">
+                {initials}
+              </div>
+            )}
             <div className="min-w-0">
-              <p className="text-sm font-medium text-[#1D1D1F] truncate">{displayName}</p>
+              <p className="text-sm font-medium text-white truncate">{displayName}</p>
               <PlanBadge plan={planKey as any} />
             </div>
           </div>
@@ -86,10 +94,10 @@ export const ClientLayout: React.FC = () => {
 
         {/* Upgrade CTA */}
         {planKey === 'essencial' && (
-          <div className="p-4 border-t border-[#E5E5EA]">
-            <div className="bg-[#EFF6FF] rounded-[10px] p-3">
-              <p className="text-xs font-medium text-[#1D4ED8] mb-2">{t('nav.upgrade_plan')}</p>
-              <p className="text-xs text-[#6E6E73] mb-2">{t('nav.upgrade_desc')}</p>
+          <div className="p-4 border-t border-white/8">
+            <div className="bg-[#2563EB]/15 rounded-[10px] p-3 border border-[#2563EB]/20">
+              <p className="text-xs font-semibold text-[#93C5FD] mb-1">{t('nav.upgrade_plan')}</p>
+              <p className="text-xs text-white/40 mb-2.5">{t('nav.upgrade_desc')}</p>
               <Button variant="primary" size="sm" fullWidth onClick={() => navigate('/portal/financeiro')}>
                 {t('nav.upgrade_plan')} →
               </Button>
@@ -98,11 +106,11 @@ export const ClientLayout: React.FC = () => {
         )}
 
         {/* Language + Sign out */}
-        <div className="p-3 border-t border-[#E5E5EA] space-y-1">
+        <div className="p-3 border-t border-white/8 space-y-1">
           <LanguageSwitcher />
           <button
             onClick={() => { signOut(); navigate('/login') }}
-            className="w-full text-left px-3 py-2 text-xs text-[#86868B] hover:text-[#FF3B30] transition-colors rounded-[8px] hover:bg-[#FFF1F2]"
+            className="w-full text-left px-3 py-2 text-xs text-white/30 hover:text-red-400 transition-colors rounded-[8px] hover:bg-white/5"
           >
             {t('nav.logout')}
           </button>

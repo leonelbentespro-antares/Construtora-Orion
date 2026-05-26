@@ -11,6 +11,7 @@ export type DocumentStatus     = 'ai_draft' | 'revisando' | 'approved' | 'reject
 export type DocumentType       = 'contrato' | 'nda' | 'notificacao' | 'politica' | 'procuracao' | 'distrato' | 'outros'
 export type PayoutStatus       = 'pending' | 'approved' | 'processing' | 'paid' | 'failed'
 export type LawyerStatus       = 'pending' | 'active' | 'suspended' | 'rejected'
+export type LawyerPlanKey      = 'essencial' | 'profissional' | 'empresarial'
 export type LegalArea          = 'trabalhista' | 'tributario' | 'contratos' | 'societario' | 'imobiliario' | 'consumidor' | 'ambiental' | 'lgpd'
 
 export interface Profile {
@@ -131,11 +132,26 @@ export interface Lawyer {
   city:             string | null
   bar_association:  string | null
   bar_number_intl:  string | null
-  document_type:    string | null
-  document_number:  string | null
-  created_at:       string
-  updated_at:       string
-  profile?:         Profile
+  document_type:          string | null
+  document_number:        string | null
+  is_platform_subscribed: boolean
+  platform_asaas_sub_id:  string | null
+  lawyer_plan_key:        LawyerPlanKey | null
+  created_at:             string
+  updated_at:             string
+  profile?:               Profile
+}
+
+export interface LawyerContactRequest {
+  id:         string
+  lawyer_id:  string
+  client_id:  string
+  message:    string
+  legal_area: string | null
+  status:     'pending' | 'seen' | 'responded'
+  created_at: string
+  updated_at: string
+  client?:    Pick<Profile, 'full_name' | 'avatar_url'>
 }
 
 export interface Consultation {

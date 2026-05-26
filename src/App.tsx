@@ -27,6 +27,7 @@ const Clientes            = React.lazy(() => import('./features/lawyer/Clientes'
 const LawyerFinanceiro    = React.lazy(() => import('./features/lawyer/Financeiro').then(m => ({ default: m.LawyerFinanceiro })))
 const DocumentosIA        = React.lazy(() => import('./features/lawyer/DocumentosIA').then(m => ({ default: m.DocumentosIA })))
 const LawyerConfiguracoes = React.lazy(() => import('./features/lawyer/Configuracoes').then(m => ({ default: m.LawyerConfiguracoes })))
+const LawyerMensagens     = React.lazy(() => import('./features/lawyer/Mensagens').then(m => ({ default: m.LawyerMensagens })))
 
 // Lazy-loaded pages — admin
 const AdminLayout    = React.lazy(() => import('./features/admin/AdminLayout').then(m => ({ default: m.AdminLayout })))
@@ -101,6 +102,7 @@ function AppRoutes() {
         <Route path="/advogado" element={<PrivateRoute><LawyerLayout /></PrivateRoute>}>
           <Route index                element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard"     element={<LawyerDashboard />} />
+          <Route path="mensagens"     element={<LawyerMensagens />} />
           <Route path="fila"          element={<Fila />} />
           <Route path="sla"           element={<SLAMonitor />} />
           <Route path="clientes"      element={<Clientes />} />

@@ -6,6 +6,8 @@ import { ErrorBoundary } from '../../components/ui/ErrorBoundary'
 import { LanguageSwitcher } from '../../components/ui/LanguageSwitcher'
 import { useAuth } from '../../context/AuthContext'
 import { useLawyerDashboard } from '../../hooks/useDashboard'
+import { useLawyerContactRequests } from '../../hooks/useContactRequest'
+import { LawyerSubscriptionBanner } from './LawyerSubscriptionBanner'
 import { getSLAStatus } from '../../lib/sla'
 
 interface NavItemProps {
@@ -41,6 +43,9 @@ export const LawyerLayout: React.FC = () => {
   const { data: dashboard }          = useLawyerDashboard()
   const navigate                     = useNavigate()
   const { t }                        = useTranslation('lawyer')
+
+  const { data: contactRequests = [] } = useLawyerContactRequests()
+  const pendingMessages = contactRequests.filter((r) => r.status === 'pending').length
 
   const openCount     = dashboard?.openConsultations?.length ?? 0
   const criticalCount = dashboard?.openConsultations?.filter(
@@ -92,6 +97,7 @@ export const LawyerLayout: React.FC = () => {
         {/* Nav */}
         <nav className="flex-1 p-3 space-y-0.5">
           <NavItem to="/advogado/dashboard"     icon="⬜" label={t('nav.dashboard')} />
+          <NavItem to="/advogado/mensagens"     icon="💬" label="Mensagens"           badge={pendingMessages} urgent={pendingMessages > 0} />
           <NavItem to="/advogado/fila"          icon="📋" label={t('nav.queue')}      badge={openCount} />
           <NavItem to="/advogado/sla"           icon="⏱" label={t('nav.sla')}        badge={criticalCount} urgent />
           <NavItem to="/advogado/clientes"      icon="👤" label={t('nav.clients')}    badge={dashboard?.activeClientCount} />
@@ -115,6 +121,7 @@ export const LawyerLayout: React.FC = () => {
       <main className="flex-1 bg-white overflow-y-auto">
         <div className="max-w-6xl mx-auto px-8 py-8">
           <ErrorBoundary>
+            <LawyerSubscriptionBanner />
             <Outlet />
           </ErrorBoundary>
         </div>

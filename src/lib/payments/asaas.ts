@@ -54,6 +54,12 @@ export const AFFILIATE_CPA = {
   empresarial:  998,
 } as const
 
+export const LAWYER_PLANS = {
+  essencial:    { price: 497,  maxClients: 5,  name: 'Essencial',    badge: null },
+  profissional: { price: 997,  maxClients: 15, name: 'Profissional', badge: 'Destaque' },
+  empresarial:  { price: 1997, maxClients: 30, name: 'Empresarial',  badge: '⭐ Premium' },
+} as const satisfies Record<string, { price: number; maxClients: number; name: string; badge: string | null }>
+
 export const AFFILIATE_RECURRING_PCT = 0.10
 export const LAWYER_REVENUE_SHARE    = 0.55
 export const LAWYER_BASE_PER_CLIENT  = 300

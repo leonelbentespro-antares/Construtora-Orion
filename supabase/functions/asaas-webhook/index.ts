@@ -40,29 +40,53 @@ Deno.serve(async (req: Request) => {
         .eq('asaas_sub_id', subId)
         .single()
 
-      if (!sub) break
+      if (sub) {
+        const dueDate   = payment?.dueDate as string
+        const periodEnd = addOneMonth(dueDate)
+        await db.schema('jurisflow').from('subscriptions').update({
+          status:               'active',
+          current_period_start: dueDate ?? new Date().toISOString().split('T')[0],
+          current_period_end:   periodEnd,
+          updated_at:           new Date().toISOString(),
+        }).eq('id', sub.id)
+        await convertAffiliateReferral(db, sub.company_id, (sub as any).plans?.key)
+        break
+      }
 
-      const dueDate    = payment?.dueDate as string
-      const periodEnd  = addOneMonth(dueDate)
+      // Check if it's a lawyer platform subscription
+      const { data: lawyer } = await db
+        .schema('jurisflow')
+        .from('lawyers')
+        .select('id')
+        .eq('platform_asaas_sub_id', subId)
+        .maybeSingle()
 
-      await db.schema('jurisflow').from('subscriptions').update({
-        status:               'active',
-        current_period_start: dueDate ?? new Date().toISOString().split('T')[0],
-        current_period_end:   periodEnd,
-        updated_at:           new Date().toISOString(),
-      }).eq('id', sub.id)
-
-      // Check for pending affiliate referral and mark as converted
-      await convertAffiliateReferral(db, sub.company_id, (sub as any).plans?.key)
+      if (lawyer) {
+        await db.schema('jurisflow').from('lawyers')
+          .update({ is_platform_subscribed: true })
+          .eq('id', lawyer.id)
+        console.log(`[asaas-webhook] lawyer ${lawyer.id} activated`)
+      }
       break
     }
 
     case 'PAYMENT_OVERDUE': {
       if (!subId) break
-      await db.schema('jurisflow').from('subscriptions').update({
-        status:     'overdue',
-        updated_at: new Date().toISOString(),
-      }).eq('asaas_sub_id', subId)
+
+      // Try company subscription first
+      const { data: companySub } = await db.schema('jurisflow').from('subscriptions')
+        .select('id').eq('asaas_sub_id', subId).maybeSingle()
+      if (companySub) {
+        await db.schema('jurisflow').from('subscriptions').update({
+          status: 'overdue', updated_at: new Date().toISOString(),
+        }).eq('asaas_sub_id', subId)
+        break
+      }
+
+      // Try lawyer subscription
+      await db.schema('jurisflow').from('lawyers')
+        .update({ is_platform_subscribed: false })
+        .eq('platform_asaas_sub_id', subId)
       break
     }
 
@@ -70,11 +94,21 @@ Deno.serve(async (req: Request) => {
     case 'PAYMENT_REFUNDED':
     case 'SUBSCRIPTION_DELETED': {
       if (!subId) break
-      await db.schema('jurisflow').from('subscriptions').update({
-        status:       'cancelled',
-        cancelled_at: new Date().toISOString(),
-        updated_at:   new Date().toISOString(),
-      }).eq('asaas_sub_id', subId)
+
+      // Try company subscription first
+      const { data: companySub } = await db.schema('jurisflow').from('subscriptions')
+        .select('id').eq('asaas_sub_id', subId).maybeSingle()
+      if (companySub) {
+        await db.schema('jurisflow').from('subscriptions').update({
+          status: 'cancelled', cancelled_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        }).eq('asaas_sub_id', subId)
+        break
+      }
+
+      // Deactivate lawyer subscription
+      await db.schema('jurisflow').from('lawyers')
+        .update({ is_platform_subscribed: false, platform_asaas_sub_id: null, lawyer_plan_key: null })
+        .eq('platform_asaas_sub_id', subId)
       break
     }
   }

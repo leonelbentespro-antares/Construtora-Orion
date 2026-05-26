@@ -20,6 +20,7 @@ export function useLawyerSearch(filters: LawyerSearchFilters) {
         .select(`
           id, country, state_province, city, specialties, experience_years,
           rating, avg_response_hours, bar_association, oab_state, oab_number,
+          is_platform_subscribed, lawyer_plan_key,
           profile:profiles(full_name, avatar_url)
         `)
         .eq('status', 'active')

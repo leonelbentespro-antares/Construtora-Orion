@@ -11,6 +11,7 @@ import { useAuth } from '../../context/AuthContext'
 import { getSLAStatus, getRemainingText } from '../../lib/sla'
 import { useLawyerReviews, avgRating } from '../../hooks/useReviews'
 import { LawyerProfileModal } from './LawyerProfileModal'
+import { LawyerCarousel } from './LawyerCarousel'
 import type { Consultation, Document as JFDocument } from '../../lib/database.types'
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -176,33 +177,44 @@ export const ClientDashboard: React.FC = () => {
         ))}
       </motion.div>
 
-      {/* Open consultations */}
-      <motion.div variants={variants.fadeUp}>
-        <Card variant="default" padding="md">
-          <CardHeader>
-            <CardTitle>Consultas Abertas</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/portal/consultas')}>
-              Ver todas →
-            </Button>
-          </CardHeader>
-          {(data?.openConsultations?.length ?? 0) > 0 ? (
+      {/* Lawyer carousel — shown when no open consultations yet */}
+      {(data?.openConsultations?.length ?? 0) === 0 && (
+        <motion.div variants={variants.fadeUp}>
+          <Card variant="default" padding="md">
+            <CardHeader>
+              <div>
+                <CardTitle>Encontre seu advogado</CardTitle>
+                <p className="text-xs text-[#86868B] mt-0.5">
+                  Selecione um especialista e inicie sua consulta
+                </p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/portal/consultas')}>
+                Ver todos →
+              </Button>
+            </CardHeader>
+            <LawyerCarousel />
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Open consultations — shown when there are active consultations */}
+      {(data?.openConsultations?.length ?? 0) > 0 && (
+        <motion.div variants={variants.fadeUp}>
+          <Card variant="default" padding="md">
+            <CardHeader>
+              <CardTitle>Consultas Abertas</CardTitle>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/portal/consultas')}>
+                Ver todas →
+              </Button>
+            </CardHeader>
             <div>
               {data!.openConsultations.map((c) => (
                 <ConsultationRow key={c.id} c={c} />
               ))}
             </div>
-          ) : (
-            <div className="text-center py-10 space-y-3">
-              <p className="text-3xl">✅</p>
-              <p className="text-sm font-medium text-[#1D1D1F]">Nenhuma consulta aberta</p>
-              <p className="text-sm text-[#6E6E73]">Que bom sinal! Tudo em dia.</p>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/portal/consultas')}>
-                Fazer uma consulta
-              </Button>
-            </div>
-          )}
-        </Card>
-      </motion.div>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Recent documents */}
       <motion.div variants={variants.fadeUp}>

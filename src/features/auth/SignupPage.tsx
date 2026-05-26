@@ -7,13 +7,10 @@ import { AuthLayout } from './AuthLayout'
 import { Button } from '../../components/ui/Button'
 import { Input } from '../../components/ui/Input'
 import { Card } from '../../components/ui/Card'
-import { Badge } from '../../components/ui/Badge'
 import { LanguageSwitcher } from '../../components/ui/LanguageSwitcher'
 import { useMultiStep } from './useMultiStep'
 import { variants, spring } from '../../lib/motion'
 import { useAuth } from '../../context/AuthContext'
-import { AFFILIATE_CPA, AFFILIATE_RECURRING_PCT } from '../../lib/payments/asaas'
-
 type Role = 'client' | 'individual' | 'lawyer' | null
 
 // ─── Role Selection ───────────────────────────────────────────────────────────
@@ -150,16 +147,6 @@ const StateSelect: React.FC<{
   )
 }
 
-// ─── Plans ────────────────────────────────────────────────────────────────────
-
-type PlanKey = 'essencial' | 'profissional' | 'empresarial'
-
-const PLANS: { key: PlanKey; price: string; highlight: boolean }[] = [
-  { key: 'essencial',    price: 'R$497/mês',   highlight: false },
-  { key: 'profissional', price: 'R$997/mês',   highlight: true  },
-  { key: 'empresarial',  price: 'R$1.997/mês', highlight: false },
-]
-
 // ─── Client Steps ─────────────────────────────────────────────────────────────
 
 interface ClientData {
@@ -168,7 +155,6 @@ interface ClientData {
   segment: string
   size: string
   areas: string[]
-  plan: PlanKey | null
   email: string
   password: string
 }
@@ -178,13 +164,13 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   const { t }      = useTranslation('auth')
   const { t: tCommon } = useTranslation('common')
   const { currentStep, goNext, goPrev, isFirst, isLast } = useMultiStep({
-    totalSteps: 4,
+    totalSteps: 3,
     storageKey: 'jurisflow:client-signup',
   })
 
   const [data, setData] = useState<ClientData>({
     companyName: '', cnpj: '', segment: '', size: '',
-    areas: [], plan: null, email: '', password: '',
+    areas: [], email: '', password: '',
   })
 
   const [loading,  setLoading]  = useState(false)
@@ -227,7 +213,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 
   return (
     <div>
-      <StepIndicator current={currentStep} total={4} />
+      <StepIndicator current={currentStep} total={3} />
 
       <AnimatePresence mode="wait" custom={dir}>
         <motion.div
@@ -297,40 +283,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 
           {currentStep === 2 && (
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-[#1D1D1F]">{t('signup.choose_plan')}</h2>
-              <div className="space-y-3">
-                {PLANS.map((plan) => (
-                  <button
-                    key={plan.key}
-                    type="button"
-                    onClick={() => setData((d) => ({ ...d, plan: plan.key }))}
-                    className={[
-                      'w-full text-left p-4 rounded-[12px] border-2 transition-all duration-150 cursor-pointer',
-                      data.plan === plan.key
-                        ? 'border-[#2563EB] bg-[#EFF6FF]'
-                        : 'border-[#E5E5EA] bg-white hover:border-[#86868B]',
-                    ].join(' ')}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="font-semibold text-sm text-[#1D1D1F]">
-                          {tCommon(`plans.${plan.key}` as any)}
-                        </span>
-                        {plan.highlight && (
-                          <Badge variant="blue" size="sm" className="ml-2">Popular</Badge>
-                        )}
-                      </div>
-                      <span className="text-sm font-semibold text-[#1D1D1F]">{plan.price}</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {currentStep === 3 && (
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-[#1D1D1F]">Acesso e pagamento</h2>
+              <h2 className="text-xl font-semibold text-[#1D1D1F]">Criar seu acesso</h2>
               <Input
                 label={t('signup.fields.email')}
                 type="email"
@@ -343,6 +296,13 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
                 value={data.password}
                 onChange={(e) => setData((d) => ({ ...d, password: e.target.value }))}
               />
+              <div className="flex items-start gap-2 bg-[#EFF6FF] border border-[#BFDBFE] rounded-[10px] px-3 py-2.5">
+                <span className="text-base shrink-0">ℹ️</span>
+                <p className="text-xs text-[#1D4ED8] leading-relaxed">
+                  Cadastro gratuito. Você só paga <strong>R$400</strong> ao contratar um advogado.
+                  Conta sem contratação é excluída após 60 dias.
+                </p>
+              </div>
             </div>
           )}
         </motion.div>
@@ -360,7 +320,7 @@ const ClientOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
         )}
         {isLast ? (
           <Button variant="primary" size="md" loading={loading} onClick={handleSubmit}>
-            Ativar assinatura
+            Criar minha conta →
           </Button>
         ) : (
           <Button
@@ -755,29 +715,6 @@ const INDIVIDUAL_AREAS = [
   'Família', 'Herança/Inventário', 'Criminal', 'Previdenciário', 'LGPD', 'Trânsito',
 ]
 
-type IndividualPlanKey = 'basico' | 'essencial' | 'completo'
-
-const INDIVIDUAL_PLANS: { key: IndividualPlanKey; name: string; price: string; desc: string; features: string[]; highlight: boolean }[] = [
-  {
-    key: 'basico', name: 'Básico', price: 'R$197/mês',
-    desc: 'Para quem precisa de apoio jurídico eventual.',
-    features: ['2 consultas por mês', 'Resposta em 24h', '1 documento por mês'],
-    highlight: false,
-  },
-  {
-    key: 'essencial', name: 'Essencial', price: 'R$397/mês',
-    desc: 'Assessoria jurídica contínua para o dia a dia.',
-    features: ['5 consultas por mês', 'Resposta em 12h', '3 documentos por mês'],
-    highlight: true,
-  },
-  {
-    key: 'completo', name: 'Completo', price: 'R$697/mês',
-    desc: 'Proteção jurídica total sem surpresas.',
-    features: ['Consultas ilimitadas', 'SLA 4h', 'Documentos ilimitados'],
-    highlight: false,
-  },
-]
-
 interface IndividualData {
   fullName: string
   cpf:      string
@@ -786,7 +723,6 @@ interface IndividualData {
   country:  string
   state:    string
   areas:    string[]
-  plan:     IndividualPlanKey | null
   email:    string
   password: string
 }
@@ -796,13 +732,13 @@ const IndividualOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete
   const { t }          = useTranslation('auth')
   const { t: tCommon } = useTranslation('common')
   const { currentStep, goNext, goPrev, isFirst, isLast } = useMultiStep({
-    totalSteps: 4,
+    totalSteps: 3,
     storageKey: 'jurisflow:individual-signup',
   })
 
   const [data, setData] = useState<IndividualData>({
     fullName: '', cpf: '', phone: '', city: '', country: 'BR', state: '',
-    areas: [], plan: null, email: '', password: '',
+    areas: [], email: '', password: '',
   })
   const [loading,  setLoading]  = useState(false)
   const [apiError, setApiError] = useState('')
@@ -836,7 +772,7 @@ const IndividualOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete
 
   return (
     <div>
-      <StepIndicator current={currentStep} total={4} />
+      <StepIndicator current={currentStep} total={3} />
 
       <div>
         {currentStep === 0 && (
@@ -919,39 +855,6 @@ const IndividualOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete
 
         {currentStep === 2 && (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold text-[#1D1D1F]">{t('signup.choose_plan')}</h2>
-            <div className="space-y-3">
-              {INDIVIDUAL_PLANS.map((plan) => (
-                <button
-                  key={plan.key}
-                  type="button"
-                  onClick={() => setData((d) => ({ ...d, plan: plan.key }))}
-                  className={[
-                    'w-full text-left p-4 rounded-[12px] border-2 transition-all duration-150 cursor-pointer',
-                    data.plan === plan.key ? 'border-[#2563EB] bg-[#EFF6FF]' : 'border-[#E5E5EA] bg-white hover:border-[#86868B]',
-                  ].join(' ')}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-sm text-[#1D1D1F]">{plan.name}</span>
-                      {plan.highlight && <Badge variant="blue" size="sm">Popular</Badge>}
-                    </div>
-                    <span className="text-sm font-semibold text-[#1D1D1F]">{plan.price}</span>
-                  </div>
-                  <p className="text-xs text-[#6E6E73] mb-2">{plan.desc}</p>
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                    {plan.features.map((f) => (
-                      <span key={f} className="text-[11px] text-[#34C759] font-medium">✓ {f}</span>
-                    ))}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {currentStep === 3 && (
-          <div className="space-y-4">
             <h2 className="text-xl font-semibold text-[#1D1D1F]">Criar seu acesso</h2>
             <Input
               label={t('signup.fields.email')}
@@ -965,16 +868,13 @@ const IndividualOnboarding: React.FC<{ onComplete: () => void }> = ({ onComplete
               value={data.password}
               onChange={(e) => setData((d) => ({ ...d, password: e.target.value }))}
             />
-            {isBrazil && (
-              <div className="flex items-start gap-2 bg-[#F0FDF4] border border-[#86EFAC] rounded-[10px] px-3 py-2.5">
-                <span className="text-base shrink-0">✅</span>
-                <p className="text-xs text-[#15803D] leading-relaxed">
-                  <strong>Programa de Afiliados ativado automaticamente.</strong>{' '}
-                  Ganhe até <strong>R${AFFILIATE_CPA.empresarial}</strong> por empresa indicada
-                  + <strong>{(AFFILIATE_RECURRING_PCT * 100).toFixed(0)}%</strong> recorrente.
-                </p>
-              </div>
-            )}
+            <div className="flex items-start gap-2 bg-[#EFF6FF] border border-[#BFDBFE] rounded-[10px] px-3 py-2.5">
+              <span className="text-base shrink-0">ℹ️</span>
+              <p className="text-xs text-[#1D4ED8] leading-relaxed">
+                Cadastro gratuito. Você só paga <strong>R$120</strong> ao contratar um advogado.
+                Conta sem contratação é excluída após 60 dias.
+              </p>
+            </div>
           </div>
         )}
       </div>
